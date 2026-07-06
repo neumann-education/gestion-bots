@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Bot Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <style>
+    html { font-size: 14px; }
+    :root {
+        --bg-color: #F4F7FE;
+        --glass-bg: rgba(255, 255, 255, 0.65);
+        --text-main: #2B3674;
+        --text-muted: #8F9BBA;
+        --accent-blue: #4318FF;
+        --accent-green: #05CD99;
+        --accent-orange: #FFB547;
+        --border-color: #E2E8F0;
+    }
+
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: var(--text-main); min-height: 100vh;
+    }
+
+    /* GLASSMORPHISM & CARDS */
+    .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.8); border-radius: 20px; box-shadow: 0 18px 40px rgba(112, 144, 176, 0.08); }
+    .glass-modal { background: rgba(255, 255, 255, 0.98); border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.1); }
+
+    .kpi-icon-wrapper { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .icon-blue { background: rgba(67, 24, 255, 0.1); color: var(--accent-blue); }
+    .icon-orange { background: rgba(255, 181, 71, 0.1); color: var(--accent-orange); }
+    .icon-green { background: rgba(5, 205, 153, 0.1); color: var(--accent-green); }
+
+    .bot-card { transition: all 0.3s; cursor: pointer; border-bottom: 4px solid transparent; }
+    .bot-card:hover { transform: translateY(-5px); box-shadow: 0 25px 50px rgba(112, 144, 176, 0.15); background: white; }
+    .bot-card.kpi-blue { border-bottom-color: var(--accent-blue); }
+    .bot-card.kpi-orange { border-bottom-color: var(--accent-orange); }
+    .bot-card.kpi-green { border-bottom-color: var(--accent-green); }
+
+    .section-title { font-size: 0.7rem; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; }
+    
+    .btn-primary-custom { background: var(--accent-blue); color: white; font-weight: 600; border-radius: 10px; padding: 10px 20px; border: none; transition: 0.3s; font-size: 0.9rem;}
+    
+    /* INPUTS COMPACTOS Y MINIMALISTAS */
+    .glass-input { 
+        background: #ffffff !important; 
+        border: 1px solid var(--border-color) !important; 
+        border-radius: 8px; 
+        padding: 8px 12px; 
+        font-size: 0.85rem; 
+        font-weight: 500; 
+        box-shadow: none !important;
+        transition: 0.2s;
+    }
+    .glass-input:focus { border-color: var(--accent-blue) !important; }
+
+    /* LAYOUT TIPO FOTO PARA EL MODAL DE VISTA (Pequeño) */
+    .view-card { 
+        border: 1px solid var(--border-color); 
+        border-radius: 8px; 
+        padding: 8px 12px; 
+        background: #fff; 
+        margin-bottom: 10px; 
+    }
+    .copy-btn { border: 1px solid var(--border-color); background: #f8fafc; border-radius: 6px; padding: 3px 8px; color: var(--text-muted); cursor: pointer; transition: 0.2s; font-size: 0.75rem; }
+    .copy-btn:hover { color: var(--accent-blue); border-color: var(--accent-blue); }
+    
+    /* TABS ESTILO MINIMALISTA (Foto 1) */
+    .custom-tabs-container { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px; display: inline-flex; }
+    .custom-tabs-container .nav-link { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-radius: 8px; padding: 6px 16px; margin: 0 2px; transition: 0.2s;}
+    .custom-tabs-container .nav-link.active { background: #ffffff; color: var(--accent-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+
+    /* INPUTS DINAMICOS RESPONSIVE */
+    .dynamic-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #ffffff; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); }
+
+    .image-dropzone { border: 2px dashed #CBD5E1; border-radius: 10px; cursor: pointer; background: #f8fafc; transition: 0.2s; }
+    .image-dropzone:hover { background: #f1f5f9; border-color: var(--accent-blue); }
+    .preview-container { display: flex; flex-wrap: wrap; gap: 10px; }
+    .img-preview-box { position: relative; width: 70px; height: 70px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+    .img-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+    .img-preview-box .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 9px; }
+
+    #loaderOverlay { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    </style>
+</head>
+<body>
+    <div id="loaderOverlay">
+        <div class="spinner-border text-primary" role="status"></div>
+        <h5 class="mt-3 fw-bold text-primary">Sincronizando Workspace...</h5>
+    </div>
+
+    <nav class="navbar navbar-custom glass-panel d-flex justify-content-between align-items-center shadow-sm m-3 px-4 py-3">
+        <a class="navbar-brand fs-4 m-0 d-flex align-items-center" href="#">
+            <div class="kpi-icon-wrapper icon-blue me-3"><i class="fa-solid fa-robot"></i></div>
+            <div><span class="fw-bold">Nexus</span><span class="fw-medium fs-6 d-block text-muted" style="line-height: 0.8;">Bot Workspace</span></div>
+        </a>
+        <button class="btn btn-primary-custom" onclick="openFormModal()"><i class="fa-solid fa-plus d-md-inline d-none me-2"></i> Nuevo Proyecto</button>
+    </nav>
+
+    <main class="container-fluid px-3 px-md-5 pb-5 mt-4">
+        <div class="glass-panel p-3 mb-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+            <input type="text" id="searchInput" class="form-control glass-input" style="max-width: 300px; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar bot, marca..." onkeyup="filterProjects()">
+            <span class="badge bg-light text-dark border px-3 py-2 fs-6 rounded-pill" id="totalCount">0 Proyectos</span>
+        </div>
+        <div class="row g-4" id="projectsGrid"></div>
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- MODAL 1: MODO VISTA (UNA SOLA COLUMNA LATERAL)            -->
+    <!-- ========================================================= -->
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content glass-modal border-0 shadow-lg">
+                
+                <div class="modal-header border-bottom-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-start">
+                    <div>
+                        <h3 class="fw-bold mb-1 text-dark" id="viewNombre">Proyecto</h3>
+                        <div class="text-muted small d-flex flex-wrap gap-3 mt-2" style="font-size: 0.8rem;">
+                            <span><i class="fa-regular fa-calendar me-1"></i> Creado: <b id="viewFechaC">--</b></span>
+                            <span><i class="fa-solid fa-clock-rotate-left me-1"></i> Modif: <b id="viewFechaImpl">--</b></span>
+                            <span><i class="fa-solid fa-signal me-1"></i> Estado: <b id="viewEstado">--</b></span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-dark btn-sm px-3 py-2 fw-bold shadow-sm" id="btnEditCurrent" style="border-radius: 8px;"><i class="fa-solid fa-pen-to-square me-1"></i> Editar</button>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+                
+                <div class="modal-body p-4 pt-3">
+                    <hr class="text-muted opacity-25 mt-0 mb-4">
+                    
+                    <div class="row g-0">
+                        <!-- Columna Izquierda (Ancha: 70%) -->
+                        <div class="col-12 col-lg-8 pe-lg-4 border-end-lg" id="leftViewCol">
+                            <div class="section-title">DESCRIPCIÓN (DOCUMENTOS Y GUIONES)</div>
+                            <div class="view-card" id="viewArgumentario">--</div>
+
+                            <div class="section-title mt-4">EVIDENCIAS ADJUNTAS</div>
+                            <div id="viewImagenes" class="preview-container view-card bg-transparent border-0 px-0 mb-4"></div>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="section-title">ENLACES DE SISTEMA</div>
+                                    <div class="view-card" id="viewUrlsList"></div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="section-title">AUTOMATIZACIONES (WEBHOOKS)</div>
+                                    <div class="view-card" id="viewAutomatizacionesList"></div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="section-title">ACCESOS GENERADOS</div>
+                                    <div class="view-card" id="viewAccesosList"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha (Estrecha: 30%, 1 Sola Columna Apilada) -->
+                        <div class="col-12 col-lg-4 ps-lg-4 mt-4 mt-lg-0">
+                            <div class="section-title text-primary">INFRAESTRUCTURA</div>
+                            
+                            <div class="d-flex flex-column mb-4">
+                                <!-- Plataforma -->
+                                <div class="view-card mb-2">
+                                    <small class="text-muted d-block" style="font-size: 0.65rem; text-transform: uppercase;">Plataforma</small>
+                                    <strong class="fs-6 text-dark" id="viewProveedor">--</strong>
+                                </div>
+                                <!-- Celular -->
+                                <div class="view-card mb-2">
+                                    <small class="text-muted d-block" style="font-size: 0.65rem; text-transform: uppercase;">Celular de Salida</small>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong class="fs-6 text-dark" id="viewCelular">--</strong>
+                                        <button class="copy-btn" onclick="copyToClipboard(document.getElementById('viewCelular').innerText, 'Celular')"><i class="fa-solid fa-copy"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column gap-4 mt-2">
+                                <div>
+                                    <div class="section-title">ATRIBUTOS GLOBALES (BITRIX/CRM)</div>
+                                    <div class="view-card" style="max-height: 180px; overflow-y: auto;" id="viewAtributosList"></div>
+                                </div>
+                                <div>
+                                    <div class="section-title" id="tituloAsesoras">ASESORAS ASIGNADAS</div>
+                                    <div class="view-card" style="max-height: 180px; overflow-y: auto;" id="viewAsesorasList"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 2: MODO FORMULARIO (DISEÑO LIMPIO FOTO 1)-->
+    <!-- ============================================== -->
+    <div class="modal fade" id="formModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content glass-modal border-0 shadow-lg">
+                <div class="modal-header pb-2 border-bottom-0 pt-4 px-4">
+                    <h4 class="fw-bold mb-0" id="formTitle">Desplegar Proyecto</h4>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-3">
+                    
+                    <!-- Tabs Minimalistas -->
+                    <div class="custom-tabs-container mb-4">
+                        <ul class="nav nav-pills flex-nowrap" style="margin: 0;">
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#edit-general">1. Detalles Generales</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-tech">2. Accesos & Enlaces</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-admin">3. Administrativo</button></li>
+                        </ul>
+                    </div>
+
+                    <form id="formProyecto">
+                        <input type="hidden" id="editRowId">
+                        
+                        <div class="tab-content">
+                            <!-- TAB 1: General y Argumentario (Documentos) -->
+                            <div class="tab-pane fade show active" id="edit-general">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Empresa / Marca</label>
+                                        <select class="form-select glass-input" id="inpMarca" required>
+                                            <option value="">Seleccione...</option>
+                                            <option value="Blackwell">Blackwell</option>
+                                            <option value="Neumann">Neumann</option>
+                                            <option value="IEmpresa">IEmpresa</option>
+                                            <option value="ITAE">ITAE</option>
+                                            <option value="Eurocoach">Eurocoach</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-8">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Nombre del Proyecto</label>
+                                        <input type="text" class="form-control glass-input" id="inpProyecto" placeholder="Ej. Admisión BGU" required>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+                                    <div class="section-title mb-0">DESCRIPCIÓN DEL PROYECTO (ENLACES)</div>
+                                    <button type="button" class="btn btn-sm btn-light border py-1" style="font-size: 0.75rem;" onclick="addDynamicRow('argumentariosContainer', 'archivo')"><i class="fa-solid fa-plus text-primary me-1"></i> Añadir Archivo</button>
+                                </div>
+                                <div id="argumentariosContainer" class="d-flex flex-column gap-2 mb-4"></div>
+
+                                <div class="section-title mt-4">EVIDENCIAS VISUALES (PEGAR CON CTRL+V)</div>
+                                <div class="image-dropzone p-4 text-center" id="imageDropzone">
+                                    <p class="mb-0 text-muted" style="font-size: 0.85rem;"><i class="fa-solid fa-image me-2"></i>Haz clic o presiona <strong>Ctrl+V</strong> para adjuntar imágenes.</p>
+                                </div>
+                                <div class="preview-container mt-3" id="previewContainerForm"></div>
+                            </div>
+
+                            <!-- TAB 2: Tecnologías y Accesos -->
+                            <div class="tab-pane fade" id="edit-tech">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Plataforma</label>
+                                        <select class="form-select glass-input" id="inpProveedor" required>
+                                            <option value="">Seleccione...</option>
+                                            <option value="Chatfuel">Chatfuel</option>
+                                            <option value="ORAIA">ORAIA</option>
+                                            <option value="VAPI">VAPI</option>
+                                            <option value="n8n">n8n</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Tipo de Bot</label>
+                                        <select class="form-select glass-input" id="inpTipoBot">
+                                            <option value="WhatsApp">WhatsApp</option>
+                                            <option value="Llamadas">Llamadas</option>
+                                            <option value="FB/IG">FB/IG</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-3">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Número Celular</label>
+                                        <input type="text" class="form-control glass-input" id="inpCelular">
+                                    </div>
+                                    <div class="col-12 col-md-3">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">URL Link WA/Web</label>
+                                        <input type="text" class="form-control glass-input" id="inpUrlWa" placeholder="wa.me/...">
+                                    </div>
+                                </div>
+
+                                <div class="row g-4 mt-2">
+                                    <!-- Sección de URLs ahora en ancho completo -->
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <div class="section-title mb-0">WEBHOOKS Y URLS</div>
+                                            <button type="button" class="btn btn-sm btn-light border py-1" style="font-size: 0.75rem;" onclick="addDynamicRow('urlsContainer', 'url')"><i class="fa-solid fa-plus text-primary me-1"></i> Añadir URL</button>
+                                        </div>
+                                        <div id="urlsContainer" class="d-flex flex-column gap-2"></div>
+                                    </div>
+                                    
+                                    <!-- Sección de Credenciales ahora abajo y también en ancho completo -->
+                                    <div class="col-12 mt-4">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <div class="section-title mb-0">CREDENCIALES DE ACCESO</div>
+                                            <button type="button" class="btn btn-sm btn-light border py-1" style="font-size: 0.75rem;" onclick="addDynamicRow('accesosContainer', 'acceso')"><i class="fa-solid fa-plus text-primary me-1"></i> Añadir Acceso</button>
+                                        </div>
+                                        <div id="accesosContainer" class="d-flex flex-column gap-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 3: Administrativo -->
+                            <div class="tab-pane fade" id="edit-admin">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Estado del Proyecto</label>
+                                        <select class="form-select glass-input" id="inpEstado">
+                                            <option value="En Desarrollo">En Desarrollo</option>
+                                            <option value="Producción">Producción</option>
+                                            <option value="Inactivo">Inactivo</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Fecha Implementación</label>
+                                        <input type="text" class="form-control glass-input" id="inpFechaImpl" placeholder="DD/MM/YYYY">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label text-muted" style="font-size: 0.7rem;">Costo Mensual / Detalles</label>
+                                        <input type="text" class="form-control glass-input" id="inpPrecio" placeholder="Ej. $50/mes">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer px-4 pb-4 pt-2 border-0 bg-transparent">
+                    <button type="button" class="btn text-muted fw-bold me-2" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn-primary-custom" onclick="saveProject()">Guardar Proyecto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+    // PON TU URL AQUI:
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwqGCUJN2vpqV_Ie7T66zWTPFGt1XPMoeOl0ERwCzKd7hbBPj1gOX-qeL4qrHs-g6LdfA/exec';
+    
+    let db = { proyectos: [], atributos: [], asesoras: [] };
+    let arrayImagenesBase64 = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('imageDropzone').addEventListener('paste', handlePaste);
+        document.addEventListener('paste', handlePaste);
+        fetchData();
+    });
+
+    async function fetchData() {
+        showLoader(true);
+        try {
+            const response = await fetch(API_URL, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'getData' }) 
+            });
+            const res = await response.json();
+            
+            if (res.status === 'success') { 
+                db.proyectos = res.proyectos || []; 
+                db.atributos = res.atributos || [];
+                db.asesoras = res.asesoras || [];
+                renderProjects(); 
+            } else {
+                console.error("Error Servidor:", res);
+                Swal.fire('Error', res.message, 'error');
+            }
+        } catch (e) { 
+            console.error("Error Fetch:", e);
+            Swal.fire('Aviso de Servidor', 'Usa un servidor local (Live Server) si da error de CORS', 'warning'); 
+        }
+        showLoader(false);
+    }
+
+    function renderProjects() {
+        const grid = document.getElementById('projectsGrid');
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        grid.innerHTML = '';
+        let count = 0;
+
+        db.proyectos.forEach(p => {
+            if (term && !(`${p.proyecto} ${p.marca} ${p.proveedor}`.toLowerCase().includes(term))) return;
+            count++;
+            let isProd = p.estado === 'Producción';
+            let color = isProd ? 'green' : 'orange';
+            
+            // Fix critico para evitar crash si el excel manda un numero
+            let tipoBotStr = String(p.tipoBot || '').toLowerCase();
+            let iconClass = tipoBotStr.includes('llamada') ? 'fa-solid fa-headset' : 'fa-brands fa-whatsapp';
+
+                grid.innerHTML += `
+                    <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+                        <div class="glass-panel bot-card kpi-${color} p-4 h-100" onclick="openViewModal(${p.rowId})">
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="kpi-icon-wrapper icon-${color}"><i class="${iconClass} fs-5"></i></div>
+                            <span class="badge ${isProd?'bg-success':'bg-warning'} bg-opacity-10 ${isProd?'text-success':'text-warning'} border rounded-pill px-3 py-2 align-self-start">${p.estado}</span>
+                        </div>
+                        <span class="badge bg-light text-primary border mb-2">${p.marca || 'Sin Marca'}</span>
+                        <h5 class="fw-bold mb-1 text-truncate">${p.proyecto}</h5>
+                        <p class="small text-muted mb-3"><i class="fa-solid fa-server me-2"></i>${p.proveedor || '--'}</p>
+                    </div>
+                </div>`;
+        });
+        document.getElementById('totalCount').innerText = `${count} Proyectos`;
+    }
+
+    // ==============================================================
+    // VISTA MODAL ESTILO TARJETAS (1 COLUMNA DERECHA)
+    // ==============================================================
+    function openViewModal(rowId) {
+        const p = db.proyectos.find(x => x.rowId === rowId);
+        
+        document.getElementById('viewNombre').innerText = p.proyecto;
+        document.getElementById('viewFechaC').innerText = p.fechaCreacion || '--/--/----';
+        document.getElementById('viewFechaImpl').innerText = p.fechaImplementacion || '--/--/----';
+        document.getElementById('viewEstado').innerText = p.estado || '---';
+        document.getElementById('viewEstado').className = p.estado === 'Producción' ? "text-success" : "text-warning";
+
+        document.getElementById('viewProveedor').innerText = p.proveedor || '--';
+        document.getElementById('viewCelular').innerText = p.celular || 'N/A';
+
+        // Render Documentos con opción de copiar
+        let argContainer = document.getElementById('viewArgumentario');
+        if(p.argumentario && p.argumentario.length > 0) {
+            argContainer.innerHTML = p.argumentario.map(a => `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <a href="${a.link}" target="_blank" class="text-decoration-none fw-bold text-truncate" style="color:var(--accent-blue); font-size:0.85rem; max-width:85%;">
+                        <i class="fa-solid fa-file-lines me-2"></i>${a.nombre || 'Documento'}
+                    </a>
+                    <button class="copy-btn" onclick="copyToClipboard('${a.link}', 'Enlace')" title="Copiar URL"><i class="fa-solid fa-copy"></i></button>
+                </div>
+            `).join('');
+        } else { argContainer.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin documentos</span>'; }
+
+        // Evidencias (Imagenes)
+        document.getElementById('viewImagenes').innerHTML = (p.imagenes || []).map(img => `<div class="img-preview-box" onclick="window.open('${img}', '_blank')" style="cursor:zoom-in;"><img src="${img}"></div>`).join('') || '<span class="text-muted ms-2" style="font-size:0.8rem">No hay evidencias</span>';
+
+        // URLs filtradas por tipo (Sistema y Automatizaciones)
+        let enlacesSistema = (p.urls || []).filter(u => u.tipo !== 'Webhook');
+        let enlacesAutomatizacion = (p.urls || []).filter(u => u.tipo === 'Webhook');
+
+        renderListBlock('viewUrlsList', enlacesSistema, 'url');
+        renderListBlock('viewAutomatizacionesList', enlacesAutomatizacion, 'url');
+        
+        // Accesos
+        renderListBlock('viewAccesosList', p.accesos, 'acceso');
+
+        // Atributos y Asesoras
+        let atrHtml = db.atributos.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${a.codigo}: ${a.nombre}</span><span class="text-muted" style="font-size:0.7rem">${a.funcion}</span></div>`).join('');
+        document.getElementById('viewAtributosList').innerHTML = atrHtml || '<span class="text-muted" style="font-size:0.8rem">No hay atributos.</span>';
+
+        document.getElementById('tituloAsesoras').innerText = `ASESORAS DE ${p.marca.toUpperCase()}`;
+        let aseFilter = db.asesoras.filter(a => a.marca === p.marca);
+        let aseHtml = aseFilter.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${a.codigo} - ${a.nombre}</span><span class="text-muted" style="font-size:0.7rem">${a.correo}</span></div>`).join('');
+        document.getElementById('viewAsesorasList').innerHTML = aseHtml || '<span class="text-muted" style="font-size:0.8rem">Sin asesoras.</span>';
+
+        document.getElementById('btnEditCurrent').onclick = () => { bootstrap.Modal.getInstance(document.getElementById('viewModal')).hide(); setTimeout(() => openFormModal(p.rowId), 400); };
+        
+        // Agregar linea divisoria a lg displays si aplica (opcional)
+        if(window.innerWidth > 992) document.getElementById('leftViewCol').classList.add('border-end'); 
+        else document.getElementById('leftViewCol').classList.remove('border-end');
+
+        new bootstrap.Modal(document.getElementById('viewModal')).show();
+    }
+
+    function renderListBlock(elementId, arr, type) {
+        const container = document.getElementById(elementId);
+        if (!arr || arr.length === 0) { container.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin registros.</span>'; return; }
+        container.innerHTML = arr.map(item => {
+            if(type === 'url') {
+                return `
+                    <div class="mb-2 d-flex justify-content-between align-items-center border-bottom pb-1">
+                        <div class="text-truncate" style="max-width:75%">
+                            <span class="badge bg-light text-dark border me-1" style="font-size:0.65rem">${item.tipo}</span> 
+                            <span class="fw-bold" style="font-size:0.8rem">${item.nombre}</span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="copy-btn" onclick="copyToClipboard('${item.link}', 'Enlace')" title="Copiar URL"><i class="fa-solid fa-copy"></i></button>
+                            <a href="${item.link}" target="_blank" class="copy-btn" title="Abrir Enlace"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </div>
+                    </div>`;
+            } else {
+                return `<div class="mb-2 border-bottom pb-1"><span class="badge bg-light text-dark border mb-1" style="font-size:0.65rem">${item.tipo}</span><div style="font-size:0.8rem"><b>U:</b> ${item.user} <br><b>P:</b> ${item.pass}</div></div>`;
+            }
+        }).join('');
+    }
+
+    function copyToClipboard(eText, msg) { navigator.clipboard.writeText(eText).then(() => Swal.fire({ icon: 'success', title: msg + ' Copiado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 })); }
+
+    // ==============================================
+    // LÓGICA DE FORMULARIO (MINIMALISTA)
+    // ==============================================
+    function openFormModal(rowId = null) {
+        document.getElementById('accesosContainer').innerHTML = '';
+        document.getElementById('urlsContainer').innerHTML = '';
+        document.getElementById('argumentariosContainer').innerHTML = '';
+        arrayImagenesBase64 = []; renderizarMiniaturas();
+        
+        if (rowId) { 
+            const p = db.proyectos.find(x => x.rowId === rowId);
+            document.getElementById('formTitle').innerText = "Editar Proyecto";
+            document.getElementById('editRowId').value = p.rowId; 
+            
+            document.getElementById('inpMarca').value = p.marca; 
+            document.getElementById('inpProyecto').value = p.proyecto;
+            document.getElementById('inpEstado').value = p.estado;
+            document.getElementById('inpProveedor').value = p.proveedor;
+            document.getElementById('inpTipoBot').value = p.tipoBot;
+            document.getElementById('inpCelular').value = p.celular;
+            document.getElementById('inpUrlWa').value = (p.integraciones||{}).urlWa || '';
+            document.getElementById('inpFechaImpl').value = p.fechaImplementacion || '';
+            document.getElementById('inpPrecio').value = (p.adquisicion||{}).precio || '';
+
+            arrayImagenesBase64 = p.imagenes || []; renderizarMiniaturas();
+            
+            (p.argumentario || []).forEach(a => addDynamicRow('argumentariosContainer', 'archivo', a));
+            (p.accesos || []).forEach(acc => addDynamicRow('accesosContainer', 'acceso', acc));
+            (p.urls || []).forEach(url => addDynamicRow('urlsContainer', 'url', url));
+        } else { 
+            document.getElementById('formTitle').innerText = "Desplegar Proyecto";
+            document.getElementById('formProyecto').reset(); 
+            document.getElementById('editRowId').value = ""; 
+            addDynamicRow('argumentariosContainer', 'archivo');
+            addDynamicRow('accesosContainer', 'acceso');
+            addDynamicRow('urlsContainer', 'url');
+        }
+        new bootstrap.Modal(document.getElementById('formModal')).show(); 
+    }
+
+    function addDynamicRow(containerId, type, data = null) {
+        const container = document.getElementById(containerId);
+        const div = document.createElement('div');
+        div.className = "dynamic-row mb-1";
+        
+        if (type === 'acceso') {
+            div.innerHTML = `<input type="text" class="form-control glass-input dt-tipo flex-grow-1" placeholder="Plataforma" value="${data ? data.tipo : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-user flex-grow-1" placeholder="User" value="${data ? data.user : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-pass flex-grow-1" placeholder="Pass" value="${data ? data.pass : ''}" style="min-width:90px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+        } else if (type === 'url') {
+            div.innerHTML = `<select class="form-select glass-input dt-tipo flex-grow-1" style="min-width:100px"><option ${data && data.tipo=='Webhook'?'selected':''}>Webhook</option><option ${data && data.tipo=='Drive'?'selected':''}>Drive</option><option ${data && data.tipo=='Otro'?'selected':''}>Otro</option></select><input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre" value="${data ? (data.nombre||'') : ''}" style="min-width:100px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="https://..." value="${data ? data.link : ''}" style="min-width:140px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+        } else if (type === 'archivo') {
+            div.innerHTML = `<input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre Doc/Guion" value="${data ? data.nombre : ''}" style="min-width:150px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="Enlace URL (Drive/Notion)" value="${data ? data.link : ''}" style="min-width:200px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+        }
+        container.appendChild(div);
+    }
+
+    function handlePaste(e) {
+        if (!document.getElementById('formModal').classList.contains('show')) return;
+        let items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (let i in items) {
+            if (items[i].kind === 'file') {
+                let reader = new FileReader();
+                reader.onload = e => { arrayImagenesBase64.push(e.target.result); renderizarMiniaturas(); };
+                reader.readAsDataURL(items[i].getAsFile());
+            }
+        }
+    }
+    function renderizarMiniaturas() { document.getElementById('previewContainerForm').innerHTML = arrayImagenesBase64.map((b64, i) => `<div class="img-preview-box"><img src="${b64}"><button type="button" class="remove-btn" onclick="eliminarImagen(${i})"><i class="fa-solid fa-xmark"></i></button></div>`).join(''); }
+    function eliminarImagen(index) { arrayImagenesBase64.splice(index, 1); renderizarMiniaturas(); }
+
+    async function saveProject() {
+        const marca = document.getElementById('inpMarca').value;
+        const proveedor = document.getElementById('inpProveedor').value;
+        const proyecto = document.getElementById('inpProyecto').value;
+        if (!marca || !proveedor || !proyecto) return Swal.fire('Faltan datos', 'Marca, Proveedor y Proyecto son requeridos.', 'warning');
+
+        const accesos = Array.from(document.querySelectorAll('#accesosContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, user: r.querySelector('.dt-user').value, pass: r.querySelector('.dt-pass').value })).filter(a => a.tipo || a.user);
+        const urls = Array.from(document.querySelectorAll('#urlsContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(u => u.link);
+        const argumentarios = Array.from(document.querySelectorAll('#argumentariosContainer .dynamic-row')).map(r => ({ nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(a => a.link);
+
+        const data = {
+            editRowId: document.getElementById('editRowId').value, 
+            marca, proyecto, proveedor, estado: document.getElementById('inpEstado').value,
+            tipoBot: document.getElementById('inpTipoBot').value, celular: document.getElementById('inpCelular').value,
+            fechaImplementacion: document.getElementById('inpFechaImpl').value,
+            argumentario: argumentarios, imagenes: arrayImagenesBase64, accesos, urls,
+            integraciones: { urlWa: document.getElementById('inpUrlWa').value },
+            adquisicion: { precio: document.getElementById('inpPrecio').value }
+        };
+
+        showLoader(true);
+        const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveProject', data: data }) });
+        const res = await response.json();
+        showLoader(false);
+
+        if (res.status === 'success') {
+            bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+            Swal.fire('¡Guardado!', 'Configuración actualizada.', 'success');
+            fetchData(); 
+        }
+    }
+    
+    function filterProjects() { renderProjects(); }
+    function showLoader(s) { document.getElementById('loaderOverlay').style.display = s ? 'flex' : 'none'; }
+    </script>
+</body>
+</html>
