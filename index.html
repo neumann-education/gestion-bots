@@ -413,6 +413,32 @@
 
     function canEdit() { return currentUser && ROLES_EDICION.includes(String(currentUser.rol).toUpperCase()); }
 
+    // Escapa texto para insertarlo de forma segura dentro de HTML/atributos,
+    // sin importar comillas, símbolos, < > u otros caracteres especiales.
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Delegación de eventos para copiar y hacer zoom: el texto real se lee
+    // desde data-* (que el navegador decodifica automáticamente), nunca se
+    // incrusta directamente dentro de un onclick.
+    document.addEventListener('click', (e) => {
+        const copyBtn = e.target.closest('.js-copy');
+        if (copyBtn) {
+            e.stopPropagation();
+            copyToClipboard(copyBtn.dataset.copyText || '', copyBtn.dataset.copyLabel || 'Dato');
+            return;
+        }
+        const zoomBox = e.target.closest('.js-zoom');
+        if (zoomBox) { window.open(zoomBox.dataset.img, '_blank'); }
+    });
+
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('imageDropzone').addEventListener('paste', handlePaste);
         document.addEventListener('paste', handlePaste);
@@ -576,10 +602,10 @@
         if(p.argumentario && p.argumentario.length > 0) {
             argContainer.innerHTML = p.argumentario.map(a => `
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <a href="${a.link}" target="_blank" class="text-decoration-none fw-bold text-truncate" style="color:var(--accent-blue); font-size:0.85rem; max-width:85%;">
-                        <i class="fa-solid fa-file-lines me-2"></i>${a.nombre || 'Documento'}
+                    <a href="${escapeHtml(a.link)}" target="_blank" class="text-decoration-none fw-bold text-truncate" style="color:var(--accent-blue); font-size:0.85rem; max-width:85%;">
+                        <i class="fa-solid fa-file-lines me-2"></i>${escapeHtml(a.nombre || 'Documento')}
                     </a>
-                    <button class="copy-btn" onclick="copyToClipboard('${a.link}', 'Enlace')" title="Copiar URL"><i class="fa-solid fa-copy"></i></button>
+                    <button class="copy-btn js-copy" data-copy-text="${escapeHtml(a.link)}" data-copy-label="Enlace" title="Copiar URL"><i class="fa-solid fa-copy"></i></button>
                 </div>
             `).join('');
         } else { argContainer.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin documentos</span>'; }
@@ -591,21 +617,21 @@
                 <div class="view-card mb-2">
                     <div class="d-flex justify-content-between align-items-center" style="cursor:pointer;" onclick="document.getElementById('promptBody_${i}').classList.toggle('d-none')">
                         <div>
-                            <span class="fw-bold d-block" style="font-size:0.85rem;"><i class="fa-solid fa-message me-2 text-primary"></i>${pr.nombre || 'Prompt ' + (i+1)}</span>
-                            <span class="text-muted d-block" style="font-size:0.7rem; margin-left:22px;"><i class="fa-regular fa-clock me-1"></i>Actualizado: ${pr.fecha || 'sin registro'}</span>
+                            <span class="fw-bold d-block" style="font-size:0.85rem;"><i class="fa-solid fa-message me-2 text-primary"></i>${escapeHtml(pr.nombre || 'Prompt ' + (i+1))}</span>
+                            <span class="text-muted d-block" style="font-size:0.7rem; margin-left:22px;"><i class="fa-regular fa-clock me-1"></i>Actualizado: ${escapeHtml(pr.fecha || 'sin registro')}</span>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard(${JSON.stringify(pr.contenido || '')}, 'Prompt')" title="Copiar Prompt"><i class="fa-solid fa-copy"></i></button>
+                            <button class="copy-btn js-copy" data-copy-text="${escapeHtml(pr.contenido || '')}" data-copy-label="Prompt" title="Copiar Prompt"><i class="fa-solid fa-copy"></i></button>
                             <i class="fa-solid fa-chevron-down text-muted" style="font-size:0.7rem;"></i>
                         </div>
                     </div>
-                    <div id="promptBody_${i}" class="d-none mt-2 pt-2 border-top text-muted" style="font-size:0.8rem; white-space: pre-wrap;">${(pr.contenido || 'Sin contenido').replace(/</g,'&lt;')}</div>
+                    <div id="promptBody_${i}" class="d-none mt-2 pt-2 border-top text-muted" style="font-size:0.8rem; white-space: pre-wrap;">${escapeHtml(pr.contenido || 'Sin contenido')}</div>
                 </div>
             `).join('');
         } else { promptsContainerView.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin prompts registrados</span>'; }
 
         // Evidencias (Imagenes)
-        document.getElementById('viewImagenes').innerHTML = (p.imagenes || []).map(img => `<div class="img-preview-box" onclick="window.open('${img}', '_blank')" style="cursor:zoom-in;"><img src="${img}"></div>`).join('') || '<span class="text-muted ms-2" style="font-size:0.8rem">No hay evidencias</span>';
+        document.getElementById('viewImagenes').innerHTML = (p.imagenes || []).map(img => `<div class="img-preview-box js-zoom" data-img="${escapeHtml(img)}" style="cursor:zoom-in;"><img src="${escapeHtml(img)}"></div>`).join('') || '<span class="text-muted ms-2" style="font-size:0.8rem">No hay evidencias</span>';
 
         // URLs filtradas por tipo (Sistema y Automatizaciones)
         let enlacesSistema = (p.urls || []).filter(u => u.tipo !== 'Webhook');
@@ -618,12 +644,12 @@
         renderListBlock('viewAccesosList', p.accesos, 'acceso');
 
         // Atributos y Asesoras
-        let atrHtml = db.atributos.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${a.codigo}: ${a.nombre}</span><span class="text-muted" style="font-size:0.7rem">${a.funcion}</span></div>`).join('');
+        let atrHtml = db.atributos.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${escapeHtml(a.codigo)}: ${escapeHtml(a.nombre)}</span><span class="text-muted" style="font-size:0.7rem">${escapeHtml(a.funcion)}</span></div>`).join('');
         document.getElementById('viewAtributosList').innerHTML = atrHtml || '<span class="text-muted" style="font-size:0.8rem">No hay atributos.</span>';
 
         document.getElementById('tituloAsesoras').innerText = `ASESORAS DE ${p.marca.toUpperCase()}`;
         let aseFilter = db.asesoras.filter(a => a.marca === p.marca);
-        let aseHtml = aseFilter.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${a.codigo} - ${a.nombre}</span><span class="text-muted" style="font-size:0.7rem">${a.correo}</span></div>`).join('');
+        let aseHtml = aseFilter.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${escapeHtml(a.codigo)} - ${escapeHtml(a.nombre)}</span><span class="text-muted" style="font-size:0.7rem">${escapeHtml(a.correo)}</span></div>`).join('');
         document.getElementById('viewAsesorasList').innerHTML = aseHtml || '<span class="text-muted" style="font-size:0.8rem">Sin asesoras.</span>';
 
         document.getElementById('btnEditCurrent').onclick = () => { bootstrap.Modal.getInstance(document.getElementById('viewModal')).hide(); setTimeout(() => openFormModal(p.rowId), 400); };
@@ -646,16 +672,16 @@
                 return `
                     <div class="mb-2 d-flex justify-content-between align-items-center border-bottom pb-1">
                         <div class="text-truncate" style="max-width:75%">
-                            <span class="badge bg-light text-dark border me-1" style="font-size:0.65rem">${item.tipo}</span> 
-                            <span class="fw-bold" style="font-size:0.8rem">${item.nombre}</span>
+                            <span class="badge bg-light text-dark border me-1" style="font-size:0.65rem">${escapeHtml(item.tipo)}</span> 
+                            <span class="fw-bold" style="font-size:0.8rem">${escapeHtml(item.nombre)}</span>
                         </div>
                         <div class="d-flex gap-1">
-                            <button class="copy-btn" onclick="copyToClipboard('${item.link}', 'Enlace')" title="Copiar URL"><i class="fa-solid fa-copy"></i></button>
-                            <a href="${item.link}" target="_blank" class="copy-btn" title="Abrir Enlace"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                            <button class="copy-btn js-copy" data-copy-text="${escapeHtml(item.link)}" data-copy-label="Enlace" title="Copiar URL"><i class="fa-solid fa-copy"></i></button>
+                            <a href="${escapeHtml(item.link)}" target="_blank" class="copy-btn" title="Abrir Enlace"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                         </div>
                     </div>`;
             } else {
-                return `<div class="mb-2 border-bottom pb-1"><span class="badge bg-light text-dark border mb-1" style="font-size:0.65rem">${item.tipo}</span><div style="font-size:0.8rem"><b>U:</b> ${item.user} <br><b>P:</b> ${item.pass}</div></div>`;
+                return `<div class="mb-2 border-bottom pb-1"><span class="badge bg-light text-dark border mb-1" style="font-size:0.65rem">${escapeHtml(item.tipo)}</span><div style="font-size:0.8rem"><b>U:</b> ${escapeHtml(item.user)} <br><b>P:</b> ${escapeHtml(item.pass)}</div></div>`;
             }
         }).join('');
     }
@@ -712,22 +738,22 @@
         div.className = "dynamic-row mb-1";
         
         if (type === 'acceso') {
-            div.innerHTML = `<input type="text" class="form-control glass-input dt-tipo flex-grow-1" placeholder="Plataforma" value="${data ? data.tipo : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-user flex-grow-1" placeholder="User" value="${data ? data.user : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-pass flex-grow-1" placeholder="Pass" value="${data ? data.pass : ''}" style="min-width:90px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+            div.innerHTML = `<input type="text" class="form-control glass-input dt-tipo flex-grow-1" placeholder="Plataforma" value="${data ? escapeHtml(data.tipo) : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-user flex-grow-1" placeholder="User" value="${data ? escapeHtml(data.user) : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-pass flex-grow-1" placeholder="Pass" value="${data ? escapeHtml(data.pass) : ''}" style="min-width:90px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
         } else if (type === 'url') {
-            div.innerHTML = `<select class="form-select glass-input dt-tipo flex-grow-1" style="min-width:100px"><option ${data && data.tipo=='Webhook'?'selected':''}>Webhook</option><option ${data && data.tipo=='Drive'?'selected':''}>Drive</option><option ${data && data.tipo=='Otro'?'selected':''}>Otro</option></select><input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre" value="${data ? (data.nombre||'') : ''}" style="min-width:100px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="https://..." value="${data ? data.link : ''}" style="min-width:140px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+            div.innerHTML = `<select class="form-select glass-input dt-tipo flex-grow-1" style="min-width:100px"><option ${data && data.tipo=='Webhook'?'selected':''}>Webhook</option><option ${data && data.tipo=='Drive'?'selected':''}>Drive</option><option ${data && data.tipo=='Otro'?'selected':''}>Otro</option></select><input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre" value="${data ? escapeHtml(data.nombre||'') : ''}" style="min-width:100px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="https://..." value="${data ? escapeHtml(data.link) : ''}" style="min-width:140px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
         } else if (type === 'archivo') {
-            div.innerHTML = `<input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre Doc/Guion" value="${data ? data.nombre : ''}" style="min-width:150px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="Enlace URL (Drive/Notion)" value="${data ? data.link : ''}" style="min-width:200px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+            div.innerHTML = `<input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre Doc/Guion" value="${data ? escapeHtml(data.nombre) : ''}" style="min-width:150px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="Enlace URL (Drive/Notion)" value="${data ? escapeHtml(data.link) : ''}" style="min-width:200px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
         } else if (type === 'prompt') {
             div.className = "d-flex flex-column gap-2 p-2 mb-1";
             div.style.cssText = "background:#ffffff; border-radius:8px; border:1px solid var(--border-color);";
             div.innerHTML = `
-                <input type="hidden" class="dt-id" value="${data && data.id ? data.id : ''}">
+                <input type="hidden" class="dt-id" value="${data && data.id ? escapeHtml(data.id) : ''}">
                 <div class="d-flex gap-2 align-items-center">
-                    <input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre del prompt (Ej. Bienvenida, Objeciones...)" value="${data ? (data.nombre||'') : ''}">
+                    <input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre del prompt (Ej. Bienvenida, Objeciones...)" value="${data ? escapeHtml(data.nombre||'') : ''}">
                     <button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.closest('.dynamic-row-prompt').remove()"><i class="fa-solid fa-trash"></i></button>
                 </div>
-                <textarea class="form-control glass-input dt-contenido" rows="4" placeholder="Contenido del prompt...">${data ? (data.contenido||'') : ''}</textarea>
-                <span class="text-muted" style="font-size:0.7rem;"><i class="fa-regular fa-clock me-1"></i>Última actualización: ${data && data.fecha ? data.fecha : 'se registrará al guardar'}</span>`;
+                <textarea class="form-control glass-input dt-contenido" rows="4" placeholder="Contenido del prompt...">${data ? escapeHtml(data.contenido||'') : ''}</textarea>
+                <span class="text-muted" style="font-size:0.7rem;"><i class="fa-regular fa-clock me-1"></i>Última actualización: ${data && data.fecha ? escapeHtml(data.fecha) : 'se registrará al guardar'}</span>`;
             div.classList.add('dynamic-row-prompt');
         }
         container.appendChild(div);
