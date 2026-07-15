@@ -85,20 +85,54 @@
     .img-preview-box .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 9px; }
 
     #loaderOverlay { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+    /* LOGIN */
+    #loginScreen { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 20% 20%, rgba(67,24,255,0.08), transparent 45%), radial-gradient(circle at 80% 80%, rgba(5,205,153,0.08), transparent 45%), var(--bg-color); }
+    .login-card { width: 100%; max-width: 380px; padding: 2.5rem 2rem; }
+    .login-logo { width: 56px; height: 56px; border-radius: 16px; background: var(--accent-blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin: 0 auto 1rem; }
+    .login-error { font-size: 0.8rem; color: #E53E3E; min-height: 1.2rem; }
+    .role-badge { font-size: 0.65rem; letter-spacing: 0.5px; padding: 4px 10px; }
     </style>
 </head>
 <body>
-    <div id="loaderOverlay">
+    <div id="loaderOverlay" style="display:none;">
         <div class="spinner-border text-primary" role="status"></div>
         <h5 class="mt-3 fw-bold text-primary">Sincronizando Workspace...</h5>
     </div>
 
+    <!-- ========================== -->
+    <!-- PANTALLA DE INICIO DE SESION -->
+    <!-- ========================== -->
+    <div id="loginScreen">
+        <div class="glass-panel login-card text-center">
+            <div class="login-logo"><i class="fa-solid fa-robot"></i></div>
+            <h4 class="fw-bold mb-0">Nexus</h4>
+            <p class="text-muted mb-4" style="font-size:0.85rem;">Bot Workspace &middot; Inicia sesión</p>
+            <form id="loginForm" onsubmit="return false;" class="text-start">
+                <label class="form-label text-muted" style="font-size:0.7rem;">Usuario</label>
+                <input type="text" class="form-control glass-input mb-3" id="loginUsuario" placeholder="tu.usuario" autocomplete="username" required>
+                <label class="form-label text-muted" style="font-size:0.7rem;">Contraseña</label>
+                <input type="password" class="form-control glass-input mb-3" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+                <div class="login-error mb-2" id="loginError"></div>
+                <button type="submit" class="btn btn-primary-custom w-100" id="btnLogin" onclick="handleLogin()">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="appShell" style="display:none;">
     <nav class="navbar navbar-custom glass-panel d-flex justify-content-between align-items-center shadow-sm m-3 px-4 py-3">
         <a class="navbar-brand fs-4 m-0 d-flex align-items-center" href="#">
             <div class="kpi-icon-wrapper icon-blue me-3"><i class="fa-solid fa-robot"></i></div>
             <div><span class="fw-bold">Nexus</span><span class="fw-medium fs-6 d-block text-muted" style="line-height: 0.8;">Bot Workspace</span></div>
         </a>
-        <button class="btn btn-primary-custom" onclick="openFormModal()"><i class="fa-solid fa-plus d-md-inline d-none me-2"></i> Nuevo Proyecto</button>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-end d-none d-sm-block">
+                <span class="fw-bold d-block" style="font-size:0.85rem; line-height:1;" id="navUserNombre">--</span>
+                <span class="badge bg-light text-primary border role-badge" id="navUserRol">--</span>
+            </span>
+            <button class="btn btn-primary-custom" id="btnNuevoProyecto" onclick="openFormModal()"><i class="fa-solid fa-plus d-md-inline d-none me-2"></i> Nuevo Proyecto</button>
+            <button class="btn btn-light border" title="Cerrar sesión" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket text-muted"></i></button>
+        </div>
     </nav>
 
     <main class="container-fluid px-3 px-md-5 pb-5 mt-4">
@@ -108,6 +142,7 @@
         </div>
         <div class="row g-4" id="projectsGrid"></div>
     </main>
+    </div><!-- /#appShell -->
 
     <!-- ========================================================= -->
     <!-- MODAL 1: MODO VISTA (UNA SOLA COLUMNA LATERAL)            -->
@@ -140,10 +175,13 @@
                             <div class="section-title">DESCRIPCIÓN (DOCUMENTOS Y GUIONES)</div>
                             <div class="view-card" id="viewArgumentario">--</div>
 
+                            <div class="section-title mt-4">PROMPTS DEL BOT</div>
+                            <div id="viewPrompts" class="mb-4"></div>
+
                             <div class="section-title mt-4">EVIDENCIAS ADJUNTAS</div>
                             <div id="viewImagenes" class="preview-container view-card bg-transparent border-0 px-0 mb-4"></div>
 
-                            <div class="row g-3">
+                            <div class="row g-3" id="viewRestrictedBlock">
                                 <div class="col-12">
                                     <div class="section-title">ENLACES DE SISTEMA</div>
                                     <div class="view-card" id="viewUrlsList"></div>
@@ -212,8 +250,9 @@
                     <div class="custom-tabs-container mb-4">
                         <ul class="nav nav-pills flex-nowrap" style="margin: 0;">
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#edit-general">1. Detalles Generales</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-tech">2. Accesos & Enlaces</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-admin">3. Administrativo</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-prompts">2. Prompts</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-tech">3. Accesos & Enlaces</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-admin">4. Administrativo</button></li>
                         </ul>
                     </div>
 
@@ -254,7 +293,16 @@
                                 <div class="preview-container mt-3" id="previewContainerForm"></div>
                             </div>
 
-                            <!-- TAB 2: Tecnologías y Accesos -->
+                            <!-- TAB 2: Prompts del Bot -->
+                            <div class="tab-pane fade" id="edit-prompts">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="section-title mb-0">PROMPTS REGISTRADOS</div>
+                                    <button type="button" class="btn btn-sm btn-light border py-1" style="font-size: 0.75rem;" onclick="addDynamicRow('promptsContainer', 'prompt')"><i class="fa-solid fa-plus text-primary me-1"></i> Añadir Prompt</button>
+                                </div>
+                                <div id="promptsContainer" class="d-flex flex-column gap-2"></div>
+                            </div>
+
+                            <!-- TAB 3: Tecnologías y Accesos -->
                             <div class="tab-pane fade" id="edit-tech">
                                 <div class="row g-3 mb-4">
                                     <div class="col-6 col-md-3">
@@ -306,7 +354,7 @@
                                 </div>
                             </div>
 
-                            <!-- TAB 3: Administrativo -->
+                            <!-- TAB 4: Administrativo -->
                             <div class="tab-pane fade" id="edit-admin">
                                 <div class="row g-3">
                                     <div class="col-12 col-md-4">
@@ -349,11 +397,84 @@
     let db = { proyectos: [], atributos: [], asesoras: [] };
     let arrayImagenesBase64 = [];
 
+    // ==============================================
+    // SESIÓN Y ROLES
+    // ==============================================
+    const ROLES_EDICION = ['ADMIN', 'SOPORTE'];
+    const SESSION_KEY = 'nexus_session';
+    let currentUser = null; // { usuario, nombre, rol }
+
+    function canEdit() { return currentUser && ROLES_EDICION.includes(String(currentUser.rol).toUpperCase()); }
+
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('imageDropzone').addEventListener('paste', handlePaste);
         document.addEventListener('paste', handlePaste);
-        fetchData();
+
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if (saved) {
+            try { currentUser = JSON.parse(saved); showApp(); }
+            catch(e) { sessionStorage.removeItem(SESSION_KEY); }
+        }
+
+        document.getElementById('loginPassword').addEventListener('keyup', (e) => { if (e.key === 'Enter') handleLogin(); });
+        document.getElementById('loginUsuario').addEventListener('keyup', (e) => { if (e.key === 'Enter') handleLogin(); });
     });
+
+    async function handleLogin() {
+        const usuario = document.getElementById('loginUsuario').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errBox = document.getElementById('loginError');
+        errBox.innerText = '';
+        if (!usuario || !password) { errBox.innerText = 'Ingresa usuario y contraseña.'; return; }
+
+        const btn = document.getElementById('btnLogin');
+        btn.disabled = true; btn.innerText = 'Verificando...';
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'login', usuario, password })
+            });
+            const res = await response.json();
+            if (res.status === 'success') {
+                currentUser = { usuario: res.usuario, nombre: res.nombre, rol: res.rol };
+                sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+                showApp();
+            } else {
+                errBox.innerText = res.message || 'Credenciales inválidas.';
+            }
+        } catch (e) {
+            errBox.innerText = 'No se pudo conectar con el servidor.';
+        }
+        btn.disabled = false; btn.innerText = 'Ingresar';
+    }
+
+    function handleLogout() {
+        sessionStorage.removeItem(SESSION_KEY);
+        currentUser = null;
+        document.getElementById('appShell').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginPassword').value = '';
+    }
+
+    function showApp() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appShell').style.display = 'block';
+        document.getElementById('navUserNombre').innerText = currentUser.nombre || currentUser.usuario;
+        document.getElementById('navUserRol').innerText = currentUser.rol;
+        document.getElementById('btnNuevoProyecto').style.display = canEdit() ? 'inline-block' : 'none';
+        fetchData();
+    }
+
+    // Oculta secciones restringidas (Enlaces de sistema, Automatizaciones, Accesos) y el botón Editar
+    // para los roles de solo lectura (CALIDAD, JEFESADMISION, MARKETING).
+    function applyRoleRestrictionsToView() {
+        const restrictedBlock = document.getElementById('viewRestrictedBlock');
+        const editBtn = document.getElementById('btnEditCurrent');
+        const allowed = canEdit();
+        restrictedBlock.style.display = allowed ? 'flex' : 'none';
+        editBtn.style.display = allowed ? 'inline-block' : 'none';
+    }
 
     async function fetchData() {
         showLoader(true);
@@ -441,6 +562,23 @@
             `).join('');
         } else { argContainer.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin documentos</span>'; }
 
+        // Render Prompts (acordeón simple, visibles para todos los roles)
+        let promptsContainerView = document.getElementById('viewPrompts');
+        if (p.prompts && p.prompts.length > 0) {
+            promptsContainerView.innerHTML = p.prompts.map((pr, i) => `
+                <div class="view-card mb-2">
+                    <div class="d-flex justify-content-between align-items-center" style="cursor:pointer;" onclick="document.getElementById('promptBody_${i}').classList.toggle('d-none')">
+                        <span class="fw-bold" style="font-size:0.85rem;"><i class="fa-solid fa-message me-2 text-primary"></i>${pr.nombre || 'Prompt ' + (i+1)}</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard(${JSON.stringify(pr.contenido || '')}, 'Prompt')" title="Copiar Prompt"><i class="fa-solid fa-copy"></i></button>
+                            <i class="fa-solid fa-chevron-down text-muted" style="font-size:0.7rem;"></i>
+                        </div>
+                    </div>
+                    <div id="promptBody_${i}" class="d-none mt-2 pt-2 border-top text-muted" style="font-size:0.8rem; white-space: pre-wrap;">${(pr.contenido || 'Sin contenido').replace(/</g,'&lt;')}</div>
+                </div>
+            `).join('');
+        } else { promptsContainerView.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin prompts registrados</span>'; }
+
         // Evidencias (Imagenes)
         document.getElementById('viewImagenes').innerHTML = (p.imagenes || []).map(img => `<div class="img-preview-box" onclick="window.open('${img}', '_blank')" style="cursor:zoom-in;"><img src="${img}"></div>`).join('') || '<span class="text-muted ms-2" style="font-size:0.8rem">No hay evidencias</span>';
 
@@ -464,6 +602,9 @@
         document.getElementById('viewAsesorasList').innerHTML = aseHtml || '<span class="text-muted" style="font-size:0.8rem">Sin asesoras.</span>';
 
         document.getElementById('btnEditCurrent').onclick = () => { bootstrap.Modal.getInstance(document.getElementById('viewModal')).hide(); setTimeout(() => openFormModal(p.rowId), 400); };
+
+        // Control de visibilidad por rol
+        applyRoleRestrictionsToView();
         
         // Agregar linea divisoria a lg displays si aplica (opcional)
         if(window.innerWidth > 992) document.getElementById('leftViewCol').classList.add('border-end'); 
@@ -500,9 +641,11 @@
     // LÓGICA DE FORMULARIO (MINIMALISTA)
     // ==============================================
     function openFormModal(rowId = null) {
+        if (!canEdit()) { return Swal.fire('Sin permisos', 'Tu rol solo tiene acceso de lectura.', 'warning'); }
         document.getElementById('accesosContainer').innerHTML = '';
         document.getElementById('urlsContainer').innerHTML = '';
         document.getElementById('argumentariosContainer').innerHTML = '';
+        document.getElementById('promptsContainer').innerHTML = '';
         arrayImagenesBase64 = []; renderizarMiniaturas();
         
         if (rowId) { 
@@ -525,6 +668,7 @@
             (p.argumentario || []).forEach(a => addDynamicRow('argumentariosContainer', 'archivo', a));
             (p.accesos || []).forEach(acc => addDynamicRow('accesosContainer', 'acceso', acc));
             (p.urls || []).forEach(url => addDynamicRow('urlsContainer', 'url', url));
+            (p.prompts || []).forEach(pr => addDynamicRow('promptsContainer', 'prompt', pr));
         } else { 
             document.getElementById('formTitle').innerText = "Desplegar Proyecto";
             document.getElementById('formProyecto').reset(); 
@@ -532,6 +676,7 @@
             addDynamicRow('argumentariosContainer', 'archivo');
             addDynamicRow('accesosContainer', 'acceso');
             addDynamicRow('urlsContainer', 'url');
+            addDynamicRow('promptsContainer', 'prompt');
         }
         new bootstrap.Modal(document.getElementById('formModal')).show(); 
     }
@@ -547,6 +692,16 @@
             div.innerHTML = `<select class="form-select glass-input dt-tipo flex-grow-1" style="min-width:100px"><option ${data && data.tipo=='Webhook'?'selected':''}>Webhook</option><option ${data && data.tipo=='Drive'?'selected':''}>Drive</option><option ${data && data.tipo=='Otro'?'selected':''}>Otro</option></select><input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre" value="${data ? (data.nombre||'') : ''}" style="min-width:100px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="https://..." value="${data ? data.link : ''}" style="min-width:140px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
         } else if (type === 'archivo') {
             div.innerHTML = `<input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre Doc/Guion" value="${data ? data.nombre : ''}" style="min-width:150px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="Enlace URL (Drive/Notion)" value="${data ? data.link : ''}" style="min-width:200px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+        } else if (type === 'prompt') {
+            div.className = "d-flex flex-column gap-2 p-2 mb-1";
+            div.style.cssText = "background:#ffffff; border-radius:8px; border:1px solid var(--border-color);";
+            div.innerHTML = `
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre del prompt (Ej. Bienvenida, Objeciones...)" value="${data ? (data.nombre||'') : ''}">
+                    <button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.closest('.dynamic-row-prompt').remove()"><i class="fa-solid fa-trash"></i></button>
+                </div>
+                <textarea class="form-control glass-input dt-contenido" rows="4" placeholder="Contenido del prompt...">${data ? (data.contenido||'') : ''}</textarea>`;
+            div.classList.add('dynamic-row-prompt');
         }
         container.appendChild(div);
     }
@@ -574,19 +729,22 @@
         const accesos = Array.from(document.querySelectorAll('#accesosContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, user: r.querySelector('.dt-user').value, pass: r.querySelector('.dt-pass').value })).filter(a => a.tipo || a.user);
         const urls = Array.from(document.querySelectorAll('#urlsContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(u => u.link);
         const argumentarios = Array.from(document.querySelectorAll('#argumentariosContainer .dynamic-row')).map(r => ({ nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(a => a.link);
+        const prompts = Array.from(document.querySelectorAll('#promptsContainer .dynamic-row-prompt')).map(r => ({ nombre: r.querySelector('.dt-nombre').value, contenido: r.querySelector('.dt-contenido').value })).filter(p => p.nombre || p.contenido);
 
         const data = {
             editRowId: document.getElementById('editRowId').value, 
             marca, proyecto, proveedor, estado: document.getElementById('inpEstado').value,
             tipoBot: document.getElementById('inpTipoBot').value, celular: document.getElementById('inpCelular').value,
             fechaImplementacion: document.getElementById('inpFechaImpl').value,
-            argumentario: argumentarios, imagenes: arrayImagenesBase64, accesos, urls,
+            argumentario: argumentarios, imagenes: arrayImagenesBase64, accesos, urls, prompts,
             integraciones: { urlWa: document.getElementById('inpUrlWa').value },
             adquisicion: { precio: document.getElementById('inpPrecio').value }
         };
 
+        if (!canEdit()) { return Swal.fire('Sin permisos', 'Tu rol solo tiene acceso de lectura.', 'warning'); }
+
         showLoader(true);
-        const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveProject', data: data }) });
+        const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveProject', data: data, usuario: currentUser.usuario, rol: currentUser.rol }) });
         const res = await response.json();
         showLoader(false);
 
