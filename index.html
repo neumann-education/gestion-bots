@@ -590,7 +590,10 @@
             promptsContainerView.innerHTML = p.prompts.map((pr, i) => `
                 <div class="view-card mb-2">
                     <div class="d-flex justify-content-between align-items-center" style="cursor:pointer;" onclick="document.getElementById('promptBody_${i}').classList.toggle('d-none')">
-                        <span class="fw-bold" style="font-size:0.85rem;"><i class="fa-solid fa-message me-2 text-primary"></i>${pr.nombre || 'Prompt ' + (i+1)}</span>
+                        <div>
+                            <span class="fw-bold d-block" style="font-size:0.85rem;"><i class="fa-solid fa-message me-2 text-primary"></i>${pr.nombre || 'Prompt ' + (i+1)}</span>
+                            <span class="text-muted d-block" style="font-size:0.7rem; margin-left:22px;"><i class="fa-regular fa-clock me-1"></i>Actualizado: ${pr.fecha || 'sin registro'}</span>
+                        </div>
                         <div class="d-flex align-items-center gap-2">
                             <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard(${JSON.stringify(pr.contenido || '')}, 'Prompt')" title="Copiar Prompt"><i class="fa-solid fa-copy"></i></button>
                             <i class="fa-solid fa-chevron-down text-muted" style="font-size:0.7rem;"></i>
@@ -718,11 +721,13 @@
             div.className = "d-flex flex-column gap-2 p-2 mb-1";
             div.style.cssText = "background:#ffffff; border-radius:8px; border:1px solid var(--border-color);";
             div.innerHTML = `
+                <input type="hidden" class="dt-id" value="${data && data.id ? data.id : ''}">
                 <div class="d-flex gap-2 align-items-center">
                     <input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre del prompt (Ej. Bienvenida, Objeciones...)" value="${data ? (data.nombre||'') : ''}">
                     <button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.closest('.dynamic-row-prompt').remove()"><i class="fa-solid fa-trash"></i></button>
                 </div>
-                <textarea class="form-control glass-input dt-contenido" rows="4" placeholder="Contenido del prompt...">${data ? (data.contenido||'') : ''}</textarea>`;
+                <textarea class="form-control glass-input dt-contenido" rows="4" placeholder="Contenido del prompt...">${data ? (data.contenido||'') : ''}</textarea>
+                <span class="text-muted" style="font-size:0.7rem;"><i class="fa-regular fa-clock me-1"></i>Última actualización: ${data && data.fecha ? data.fecha : 'se registrará al guardar'}</span>`;
             div.classList.add('dynamic-row-prompt');
         }
         container.appendChild(div);
@@ -751,7 +756,7 @@
         const accesos = Array.from(document.querySelectorAll('#accesosContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, user: r.querySelector('.dt-user').value, pass: r.querySelector('.dt-pass').value })).filter(a => a.tipo || a.user);
         const urls = Array.from(document.querySelectorAll('#urlsContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(u => u.link);
         const argumentarios = Array.from(document.querySelectorAll('#argumentariosContainer .dynamic-row')).map(r => ({ nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(a => a.link);
-        const prompts = Array.from(document.querySelectorAll('#promptsContainer .dynamic-row-prompt')).map(r => ({ nombre: r.querySelector('.dt-nombre').value, contenido: r.querySelector('.dt-contenido').value })).filter(p => p.nombre || p.contenido);
+        const prompts = Array.from(document.querySelectorAll('#promptsContainer .dynamic-row-prompt')).map(r => ({ id: r.querySelector('.dt-id').value, nombre: r.querySelector('.dt-nombre').value, contenido: r.querySelector('.dt-contenido').value })).filter(p => p.nombre || p.contenido);
 
         const data = {
             editRowId: document.getElementById('editRowId').value, 
