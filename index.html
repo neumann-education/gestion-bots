@@ -92,6 +92,11 @@
     .login-logo { width: 56px; height: 56px; border-radius: 16px; background: var(--accent-blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin: 0 auto 1rem; }
     .login-error { font-size: 0.8rem; color: #E53E3E; min-height: 1.2rem; }
     .role-badge { font-size: 0.65rem; letter-spacing: 0.5px; padding: 4px 10px; }
+
+    /* CHIPS DE MARCA */
+    .brand-chip { background: #ffffff; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 600; font-size: 0.8rem; padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: 0.2s; }
+    .brand-chip:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .brand-chip.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
     </style>
 </head>
 <body>
@@ -140,6 +145,7 @@
             <input type="text" id="searchInput" class="form-control glass-input" style="max-width: 300px; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar bot, marca..." onkeyup="filterProjects()">
             <span class="badge bg-light text-dark border px-3 py-2 fs-6 rounded-pill" id="totalCount">0 Proyectos</span>
         </div>
+        <div class="d-flex flex-wrap gap-2 mb-4" id="marcaChips"></div>
         <div class="row g-4" id="projectsGrid"></div>
     </main>
     </div><!-- /#appShell -->
@@ -396,6 +402,7 @@
     
     let db = { proyectos: [], atributos: [], asesoras: [] };
     let arrayImagenesBase64 = [];
+    let activeMarca = 'Todas';
 
     // ==============================================
     // SESIÓN Y ROLES
@@ -490,6 +497,7 @@
                 db.proyectos = res.proyectos || []; 
                 db.atributos = res.atributos || [];
                 db.asesoras = res.asesoras || [];
+                renderBrandChips();
                 renderProjects(); 
             } else {
                 console.error("Error Servidor:", res);
@@ -502,6 +510,19 @@
         showLoader(false);
     }
 
+    function renderBrandChips() {
+        const marcas = Array.from(new Set(db.proyectos.map(p => p.marca).filter(Boolean))).sort();
+        const container = document.getElementById('marcaChips');
+        const opciones = ['Todas', ...marcas];
+        container.innerHTML = opciones.map(m => `<button type="button" class="brand-chip ${m === activeMarca ? 'active' : ''}" onclick="selectMarca('${m.replace(/'/g, "\\'")}')">${m}</button>`).join('');
+    }
+
+    function selectMarca(marca) {
+        activeMarca = marca;
+        renderBrandChips();
+        renderProjects();
+    }
+
     function renderProjects() {
         const grid = document.getElementById('projectsGrid');
         const term = document.getElementById('searchInput').value.toLowerCase();
@@ -509,6 +530,7 @@
         let count = 0;
 
         db.proyectos.forEach(p => {
+            if (activeMarca && activeMarca !== 'Todas' && p.marca !== activeMarca) return;
             if (term && !(`${p.proyecto} ${p.marca} ${p.proveedor}`.toLowerCase().includes(term))) return;
             count++;
             let isProd = p.estado === 'Producción';
