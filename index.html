@@ -145,7 +145,8 @@
             <input type="text" id="searchInput" class="form-control glass-input" style="max-width: 300px; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar bot, marca..." onkeyup="filterProjects()">
             <span class="badge bg-light text-dark border px-3 py-2 fs-6 rounded-pill" id="totalCount">0 Proyectos</span>
         </div>
-        <div class="d-flex flex-wrap gap-2 mb-4" id="marcaChips"></div>
+        <div class="d-flex flex-wrap gap-2 mb-2" id="marcaChips"></div>
+        <div class="d-flex flex-wrap gap-2 mb-4" id="proveedorChips"></div>
         <div class="row g-4" id="projectsGrid"></div>
     </main>
     </div><!-- /#appShell -->
@@ -403,6 +404,7 @@
     let db = { proyectos: [], atributos: [], asesoras: [] };
     let arrayImagenesBase64 = [];
     let activeMarca = 'Todas';
+    let activeProveedor = 'Todas';
 
     // ==============================================
     // SESIÓN Y ROLES
@@ -524,6 +526,7 @@
                 db.atributos = res.atributos || [];
                 db.asesoras = res.asesoras || [];
                 renderBrandChips();
+                renderProveedorChips();
                 renderProjects(); 
             } else {
                 console.error("Error Servidor:", res);
@@ -549,6 +552,19 @@
         renderProjects();
     }
 
+    function renderProveedorChips() {
+        const proveedores = Array.from(new Set(db.proyectos.map(p => p.proveedor).filter(Boolean))).sort();
+        const container = document.getElementById('proveedorChips');
+        const opciones = ['Todas', ...proveedores];
+        container.innerHTML = opciones.map(m => `<button type="button" class="brand-chip ${m === activeProveedor ? 'active' : ''}" onclick="selectProveedor('${m.replace(/'/g, "\\'")}')">${m}</button>`).join('');
+    }
+
+    function selectProveedor(proveedor) {
+        activeProveedor = proveedor;
+        renderProveedorChips();
+        renderProjects();
+    }
+
     function renderProjects() {
         const grid = document.getElementById('projectsGrid');
         const term = document.getElementById('searchInput').value.toLowerCase();
@@ -557,6 +573,7 @@
 
         db.proyectos.forEach(p => {
             if (activeMarca && activeMarca !== 'Todas' && p.marca !== activeMarca) return;
+            if (activeProveedor && activeProveedor !== 'Todas' && p.proveedor !== activeProveedor) return;
             if (term && !(`${p.proyecto} ${p.marca} ${p.proveedor}`.toLowerCase().includes(term))) return;
             count++;
             let isProd = p.estado === 'Producción';
@@ -797,14 +814,22 @@
         if (!canEdit()) { return Swal.fire('Sin permisos', 'Tu rol solo tiene acceso de lectura.', 'warning'); }
 
         showLoader(true);
-        const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveProject', data: data, usuario: currentUser.usuario, rol: currentUser.rol }) });
-        const res = await response.json();
-        showLoader(false);
+        try {
+            const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveProject', data: data, usuario: currentUser.usuario, rol: currentUser.rol }) });
+            const res = await response.json();
 
-        if (res.status === 'success') {
-            bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
-            Swal.fire('¡Guardado!', 'Configuración actualizada.', 'success');
-            fetchData(); 
+            if (res.status === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+                Swal.fire('¡Guardado!', 'Configuración actualizada.', 'success');
+                fetchData();
+            } else {
+                Swal.fire('No se pudo guardar', res.message || 'El servidor respondió con un error.', 'error');
+            }
+        } catch (e) {
+            console.error('Error guardando proyecto:', e);
+            Swal.fire('Error de conexión', 'No se pudo comunicar con el servidor (revisa la URL del Apps Script, que esté bien implementado/autorizado, o el tamaño del contenido). Vuelve a intentarlo.', 'error');
+        } finally {
+            showLoader(false);
         }
     }
     
