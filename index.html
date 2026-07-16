@@ -136,6 +136,7 @@
                 <span class="badge bg-light text-primary border role-badge" id="navUserRol">--</span>
             </span>
             <button class="btn btn-primary-custom" id="btnNuevoProyecto" onclick="openFormModal()"><i class="fa-solid fa-plus d-md-inline d-none me-2"></i> Nuevo Proyecto</button>
+            <button class="btn btn-light border" id="btnEnviarAccesos" title="Enviar accesos por correo" onclick="openAccessMailModal()"><i class="fa-solid fa-paper-plane text-primary"></i></button>
             <button class="btn btn-light border" title="Cerrar sesión" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket text-muted"></i></button>
         </div>
     </nav>
@@ -393,6 +394,36 @@
         </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- MODAL 3: ENVIAR ACCESOS POR CORREO             -->
+    <!-- ============================================== -->
+    <div class="modal fade" id="accessMailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content glass-modal border-0 shadow-lg">
+                <div class="modal-header pb-2 border-bottom-0 pt-4 px-4">
+                    <div>
+                        <h4 class="fw-bold mb-0">Enviar Accesos</h4>
+                        <p class="text-muted mb-0" style="font-size:0.8rem;">Selecciona a quién enviarle un correo con su usuario y contraseña.</p>
+                    </div>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="d-flex align-items-center gap-2" style="font-size:0.85rem; cursor:pointer;">
+                            <input type="checkbox" id="chkTodosUsuarios" onclick="toggleTodosUsuarios(this)"> Seleccionar todos
+                        </label>
+                        <span class="text-muted" id="accessMailLoading" style="font-size:0.8rem;"></span>
+                    </div>
+                    <div id="usuariosListContainer" class="d-flex flex-column gap-2" style="max-height:340px; overflow-y:auto;"></div>
+                </div>
+                <div class="modal-footer px-4 pb-4 pt-2 border-0 bg-transparent">
+                    <button type="button" class="btn text-muted fw-bold me-2" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn-primary-custom" id="btnEnviarAccesosConfirm" onclick="sendAccessMails()"><i class="fa-solid fa-paper-plane me-2"></i>Enviar Notificación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -498,6 +529,7 @@
         document.getElementById('navUserNombre').innerText = currentUser.nombre || currentUser.usuario;
         document.getElementById('navUserRol').innerText = currentUser.rol;
         document.getElementById('btnNuevoProyecto').style.display = canEdit() ? 'inline-block' : 'none';
+        document.getElementById('btnEnviarAccesos').style.display = canEdit() ? 'inline-block' : 'none';
         fetchData();
     }
 
@@ -509,6 +541,95 @@
         const allowed = canEdit();
         restrictedBlock.style.display = allowed ? 'flex' : 'none';
         editBtn.style.display = allowed ? 'inline-block' : 'none';
+    }
+
+    // ==============================================
+    // ENVIAR ACCESOS POR CORREO (solo ADMIN/SOPORTE)
+    // ==============================================
+    async function openAccessMailModal() {
+        if (!canEdit()) { return Swal.fire('Sin permisos', 'Tu rol no puede enviar accesos.', 'warning'); }
+        const listContainer = document.getElementById('usuariosListContainer');
+        const loadingLabel = document.getElementById('accessMailLoading');
+        listContainer.innerHTML = '';
+        document.getElementById('chkTodosUsuarios').checked = false;
+        loadingLabel.innerText = 'Cargando...';
+        new bootstrap.Modal(document.getElementById('accessMailModal')).show();
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'getUsuarios', rol: currentUser.rol })
+            });
+            const res = await response.json();
+            loadingLabel.innerText = '';
+            if (res.status === 'success') {
+                renderUsuariosList(res.usuarios || []);
+            } else {
+                listContainer.innerHTML = `<span class="text-muted" style="font-size:0.85rem">${escapeHtml(res.message || 'No se pudo cargar la lista de usuarios.')}</span>`;
+            }
+        } catch (e) {
+            loadingLabel.innerText = '';
+            listContainer.innerHTML = '<span class="text-muted" style="font-size:0.85rem">Error de conexión al cargar usuarios.</span>';
+        }
+    }
+
+    function renderUsuariosList(usuarios) {
+        const listContainer = document.getElementById('usuariosListContainer');
+        if (!usuarios || usuarios.length === 0) {
+            listContainer.innerHTML = '<span class="text-muted" style="font-size:0.85rem">No hay usuarios registrados.</span>';
+            return;
+        }
+        listContainer.innerHTML = usuarios.map(u => `
+            <label class="view-card mb-0 d-flex justify-content-between align-items-center" style="cursor:pointer;">
+                <span class="d-flex align-items-center gap-2">
+                    <input type="checkbox" class="chk-usuario" value="${escapeHtml(u.usuario)}" ${u.correo ? '' : 'disabled'}>
+                    <span>
+                        <span class="fw-bold d-block" style="font-size:0.85rem;">${escapeHtml(u.nombre)}</span>
+                        <span class="text-muted d-block" style="font-size:0.75rem;">${u.correo ? escapeHtml(u.correo) : 'Sin correo registrado'}</span>
+                    </span>
+                </span>
+                <span class="badge bg-light text-primary border" style="font-size:0.65rem;">${escapeHtml(u.rol)}</span>
+            </label>
+        `).join('');
+    }
+
+    function toggleTodosUsuarios(checkbox) {
+        document.querySelectorAll('.chk-usuario:not(:disabled)').forEach(c => c.checked = checkbox.checked);
+    }
+
+    async function sendAccessMails() {
+        const destinatarios = Array.from(document.querySelectorAll('.chk-usuario:checked')).map(c => c.value);
+        if (destinatarios.length === 0) { return Swal.fire('Selecciona al menos un usuario', '', 'warning'); }
+
+        const btn = document.getElementById('btnEnviarAccesosConfirm');
+        btn.disabled = true;
+        showLoader(true);
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'enviarAccesos', rol: currentUser.rol, destinatarios })
+            });
+            const res = await response.json();
+            if (res.status === 'success') {
+                const fallidos = (res.resultados || []).filter(r => !r.enviado);
+                bootstrap.Modal.getInstance(document.getElementById('accessMailModal')).hide();
+                if (fallidos.length === 0) {
+                    Swal.fire('¡Enviado!', `Se notificó a ${destinatarios.length} usuario(s).`, 'success');
+                } else {
+                    const detalle = fallidos.map(f => `${f.usuario}: ${f.motivo}`).join('<br>');
+                    Swal.fire({ icon: 'warning', title: 'Enviado con observaciones', html: `Algunos correos no se pudieron enviar:<br><small>${detalle}</small>` });
+                }
+            } else {
+                Swal.fire('No se pudo enviar', res.message || 'Ocurrió un error inesperado.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error de conexión', 'No se pudo comunicar con el servidor. Inténtalo de nuevo.', 'error');
+        } finally {
+            btn.disabled = false;
+            showLoader(false);
+        }
     }
 
     async function fetchData() {
