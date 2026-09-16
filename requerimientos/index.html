@@ -87,6 +87,26 @@
     border-radius:8px;border:1px solid var(--line);font-size:.85rem;padding:.4rem .6rem;
   }
 
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem;margin-bottom:1.1rem;
+  }
+  .stat-card{
+    background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:.8rem .9rem;
+  }
+  .stat-label{font-size:.74rem;color:var(--ink-soft);margin-bottom:.15rem;}
+  .stat-value{font-size:1.5rem;font-weight:700;letter-spacing:-0.01em;color:var(--ink);}
+  .stat-pendiente .stat-value{color:var(--danger);}
+  .stat-proceso .stat-value{color:var(--warn);}
+  .stat-completado .stat-value{color:var(--accent);}
+  .stat-progreso .stat-value{color:var(--accent);font-size:1.25rem;}
+  .stat-bar{height:6px;border-radius:20px;background:var(--bg);margin-top:.4rem;overflow:hidden;}
+  .stat-bar-fill{height:100%;background:var(--accent);border-radius:20px;width:0%;transition:width .3s ease;}
+
+  @media (max-width: 900px){
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+  }
+
   .req-card{
     background:#fff;border:1px solid var(--line);border-radius:12px;
     padding:1rem 1.1rem;margin-bottom:.7rem;
@@ -177,6 +197,30 @@
       <div class="page-subtitle" id="pageSubtitle">Selecciona un sistema en la barra lateral para enfocarte, o revisa todos los requerimientos aquí.</div>
     </div>
     <button class="btn-accent" id="btnNuevoReq"><i class="bi bi-plus-lg"></i> Nuevo requerimiento</button>
+  </div>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-value" id="statTotal">0</div>
+    </div>
+    <div class="stat-card stat-pendiente">
+      <div class="stat-label">Pendientes</div>
+      <div class="stat-value" id="statPendientes">0</div>
+    </div>
+    <div class="stat-card stat-proceso">
+      <div class="stat-label">En Proceso</div>
+      <div class="stat-value" id="statProceso">0</div>
+    </div>
+    <div class="stat-card stat-completado">
+      <div class="stat-label">Completados</div>
+      <div class="stat-value" id="statCompletados">0</div>
+    </div>
+    <div class="stat-card stat-progreso">
+      <div class="stat-label">Avance</div>
+      <div class="stat-value" id="statPorcentaje">0%</div>
+      <div class="stat-bar"><div class="stat-bar-fill" id="statBarFill"></div></div>
+    </div>
   </div>
 
   <div class="filters">
@@ -357,8 +401,25 @@
     const data = await api('get_requerimientos', { idSistema: sistemaActivo });
     if (data.status === 'success') {
       requerimientos = data.data;
+      renderStats();
       renderRequerimientos();
     }
+  }
+
+  // ---------- KPIs ----------
+  function renderStats() {
+    const total = requerimientos.length;
+    const pendientes = requerimientos.filter(r => r.Estado === 'Pendiente').length;
+    const enProceso = requerimientos.filter(r => r.Estado === 'En Proceso').length;
+    const completados = requerimientos.filter(r => r.Estado === 'Completado').length;
+    const porcentaje = total > 0 ? Math.round((completados / total) * 100) : 0;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statPendientes').textContent = pendientes;
+    document.getElementById('statProceso').textContent = enProceso;
+    document.getElementById('statCompletados').textContent = completados;
+    document.getElementById('statPorcentaje').textContent = porcentaje + '%';
+    document.getElementById('statBarFill').style.width = porcentaje + '%';
   }
 
   // ---------- Render sidebar ----------
