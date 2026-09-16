@@ -130,6 +130,19 @@
   .form-control, .form-select{border-radius:8px;border:1px solid var(--line);font-size:.88rem;}
   .form-control:focus, .form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
 
+  .img-preview-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;}
+  .img-preview-item{position:relative;width:78px;height:78px;}
+  .img-preview-item img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--line);}
+  .img-preview-item .img-remove{
+    position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;
+    background:var(--danger);color:#fff;border:none;font-size:.7rem;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .req-imagenes{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem;}
+  .req-imagenes img{
+    width:56px;height:56px;object-fit:cover;border-radius:7px;border:1px solid var(--line);cursor:pointer;
+  }
+
   @media (max-width: 860px){
     .sidebar{position:static;width:100%;min-height:auto;}
     .main{margin-left:0;}
@@ -267,12 +280,27 @@
             <input type="text" class="form-control" id="reqResponsable" placeholder="Nombre">
           </div>
         </div>
+        <div class="mb-2">
+          <label>Imágenes (capturas de lo que se solicita, opcional)</label>
+          <input type="file" class="form-control" id="reqImagenesInput" accept="image/*" multiple>
+          <div id="reqImagenesPreview" class="img-preview-grid"></div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline-danger btn-sm me-auto d-none" id="btnEliminarReq">Eliminar</button>
         <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button class="btn-accent" id="btnGuardarReq">Guardar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Lightbox de imagen -->
+<div class="modal fade" id="modalLightbox" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-transparent border-0">
+      <button type="button" class="btn-close btn-close-white ms-auto mb-2" data-bs-dismiss="modal"></button>
+      <img id="lightboxImg" src="" style="max-width:100%;border-radius:10px;">
     </div>
   </div>
 </div>
@@ -396,6 +424,7 @@
 
     list.innerHTML = filtrados.map(r => {
       const sistemaNombre = sistemaActivo === '' ? (sistemas.find(s => s.ID === r.IDSistema)?.Nombre || '') : '';
+      const imagenes = (r.Imagenes || '').split(',').map(u => u.trim()).filter(Boolean);
       return `
       <div class="req-card">
         <div class="req-top">
@@ -413,6 +442,7 @@
                 <option ${r.Estado==='Completado'?'selected':''}>Completado</option>
               </select>
             </div>
+            ${imagenes.length ? `<div class="req-imagenes">${imagenes.map(u => `<img src="${u}" onclick="verImagen('${u}')">`).join('')}</div>` : ''}
           </div>
           ${puedeEditar ? `
           <div class="req-actions">
@@ -422,6 +452,11 @@
       </div>`;
     }).join('');
   }
+
+  window.verImagen = function(url) {
+    document.getElementById('lightboxImg').src = url;
+    new bootstrap.Modal(document.getElementById('modalLightbox')).show();
+  };
 
   window.cambiarEstado = async function(id, estado) {
     await api('update_estado_requerimiento', { id, estado });
@@ -491,6 +526,53 @@
   // ---------- Modal Requerimiento ----------
   const modalReq = new bootstrap.Modal(document.getElementById('modalReq'));
 
+  // imagenesExistentes: URLs que ya estaban guardadas (modo edición)
+  // imagenesNuevas: { file, previewUrl } pendientes de subir al guardar
+  let imagenesExistentes = [];
+  let imagenesNuevas = [];
+
+  function renderImagenesPreview() {
+    const cont = document.getElementById('reqImagenesPreview');
+    let html = '';
+    imagenesExistentes.forEach((url, i) => {
+      html += `<div class="img-preview-item">
+        <img src="${url}">
+        <button type="button" class="img-remove" onclick="quitarImagenExistente(${i})">×</button>
+      </div>`;
+    });
+    imagenesNuevas.forEach((img, i) => {
+      html += `<div class="img-preview-item">
+        <img src="${img.previewUrl}">
+        <button type="button" class="img-remove" onclick="quitarImagenNueva(${i})">×</button>
+      </div>`;
+    });
+    cont.innerHTML = html;
+  }
+
+  window.quitarImagenExistente = async function(i) {
+    const url = imagenesExistentes[i];
+    imagenesExistentes.splice(i, 1);
+    renderImagenesPreview();
+    await api('eliminar_imagen', { url });
+  };
+
+  window.quitarImagenNueva = function(i) {
+    imagenesNuevas.splice(i, 1);
+    renderImagenesPreview();
+  };
+
+  document.getElementById('reqImagenesInput').addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        imagenesNuevas.push({ file, previewUrl: reader.result });
+        renderImagenesPreview();
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  });
+
   document.getElementById('btnNuevoReq').addEventListener('click', () => {
     if (sistemas.length === 0) { alert('Primero crea un sistema.'); return; }
     document.getElementById('modalReqTitle').textContent = 'Nuevo requerimiento';
@@ -503,6 +585,9 @@
     document.getElementById('reqResponsable').value = '';
     document.getElementById('reqSistema').value = sistemaActivo || sistemas[0].ID;
     document.getElementById('btnEliminarReq').classList.add('d-none');
+    imagenesExistentes = [];
+    imagenesNuevas = [];
+    renderImagenesPreview();
     modalReq.show();
   });
 
@@ -517,27 +602,55 @@
     document.getElementById('reqPrioridad').value = r.Prioridad;
     document.getElementById('reqResponsable').value = r.Responsable || '';
     document.getElementById('btnEliminarReq').classList.remove('d-none');
+    imagenesExistentes = (r.Imagenes || '').split(',').map(u => u.trim()).filter(Boolean);
+    imagenesNuevas = [];
+    renderImagenesPreview();
     modalReq.show();
   };
 
   document.getElementById('btnGuardarReq').addEventListener('click', async () => {
     const id = document.getElementById('reqId').value;
+    const titulo = document.getElementById('reqTitulo').value.trim();
+    if (!titulo) { alert('El título es obligatorio'); return; }
+
+    const btn = document.getElementById('btnGuardarReq');
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+
+    // Subir imágenes nuevas a Drive antes de guardar el requerimiento
+    const urlsSubidas = [];
+    for (let i = 0; i < imagenesNuevas.length; i++) {
+      btn.textContent = `Subiendo imagen ${i + 1} de ${imagenesNuevas.length}...`;
+      const img = imagenesNuevas[i];
+      const base64 = img.previewUrl.split(',')[1];
+      const res = await api('upload_imagen', {
+        imagenBase64: base64,
+        nombreArchivo: img.file.name,
+        tipoMime: img.file.type
+      });
+      if (res.status === 'success') urlsSubidas.push(res.url);
+    }
+    btn.textContent = 'Guardando...';
+
     const payload = {
       idSistema: document.getElementById('reqSistema').value,
-      titulo: document.getElementById('reqTitulo').value.trim(),
+      titulo,
       descripcion: document.getElementById('reqDescripcion').value.trim(),
       modulo: document.getElementById('reqModulo').value.trim(),
       categoria: document.getElementById('reqCategoria').value,
       prioridad: document.getElementById('reqPrioridad').value,
-      responsable: document.getElementById('reqResponsable').value.trim()
+      responsable: document.getElementById('reqResponsable').value.trim(),
+      imagenes: imagenesExistentes.concat(urlsSubidas).join(',')
     };
-    if (!payload.titulo) { alert('El título es obligatorio'); return; }
 
     if (id) {
       await api('update_requerimiento', { id, ...payload });
     } else {
       await api('create_requerimiento', payload);
     }
+
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
     modalReq.hide();
     await cargarRequerimientos();
     await cargarSistemas();
