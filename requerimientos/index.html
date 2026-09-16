@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de Requerimientos</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b2430;
+    --ink-soft:#5b6472;
+    --line:#e3e6ea;
+    --accent:#2f5d50;
+    --accent-soft:#e7efec;
+    --bg:#f4f5f7;
+    --danger:#a13636;
+    --warn:#a5762f;
+  }
+  *{font-family:'Inter',sans-serif;}
+  body{background:var(--bg);color:var(--ink);}
+  a{text-decoration:none;}
+
+  /* Sidebar */
+  .sidebar{
+    width:270px;
+    min-height:100vh;
+    background:#fff;
+    border-right:1px solid var(--line);
+    padding:1.25rem 1rem;
+    position:fixed;
+    top:0;left:0;bottom:0;
+    overflow-y:auto;
+  }
+  .brand{display:flex;align-items:center;gap:.6rem;margin-bottom:1.5rem;padding:0 .25rem;}
+  .brand-mark{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;}
+  .brand-name{font-weight:600;font-size:.95rem;letter-spacing:-0.01em;}
+
+  .sidebar-label{
+    font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--ink-soft);padding:0 .5rem;margin:.75rem 0 .4rem;
+  }
+  .sistema-item{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:.55rem .6rem;border-radius:9px;cursor:pointer;margin-bottom:.15rem;
+    font-size:.87rem;color:var(--ink);
+  }
+  .sistema-item:hover{background:var(--bg);}
+  .sistema-item.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+  .sistema-item .count{
+    font-size:.72rem;color:var(--ink-soft);background:var(--bg);
+    border-radius:20px;padding:.05rem .5rem;
+  }
+  .sistema-item.active .count{background:#fff;}
+
+  .btn-new-sistema{
+    width:100%;border:1px dashed var(--line);border-radius:9px;
+    padding:.5rem;font-size:.85rem;color:var(--ink-soft);background:none;
+    margin-top:.4rem;
+  }
+  .btn-new-sistema:hover{border-color:var(--accent);color:var(--accent);}
+
+  .user-box{
+    position:absolute;bottom:0;left:0;right:0;
+    padding:1rem;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+    background:#fff;
+  }
+  .user-name{font-size:.85rem;font-weight:600;}
+  .user-rol{font-size:.72rem;color:var(--ink-soft);}
+
+  /* Main */
+  .main{margin-left:270px;padding:1.75rem 2rem 4rem;}
+  .page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;}
+  .page-title{font-size:1.35rem;font-weight:700;letter-spacing:-0.01em;margin-bottom:.15rem;}
+  .page-subtitle{color:var(--ink-soft);font-size:.88rem;}
+
+  .btn-accent{background:var(--accent);border:none;color:#fff;border-radius:9px;
+    padding:.5rem 1rem;font-size:.87rem;font-weight:600;}
+  .btn-accent:hover{background:#254b41;color:#fff;}
+
+  .filters{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+  .filters select, .filters input{
+    border-radius:8px;border:1px solid var(--line);font-size:.85rem;padding:.4rem .6rem;
+  }
+
+  .req-card{
+    background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:1rem 1.1rem;margin-bottom:.7rem;
+  }
+  .req-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;}
+  .req-title{font-weight:600;font-size:.95rem;margin-bottom:.2rem;}
+  .req-desc{color:var(--ink-soft);font-size:.85rem;margin-bottom:.5rem;white-space:pre-wrap;}
+  .req-meta{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;}
+
+  .badge-pill{border-radius:20px;font-weight:600;font-size:.72rem;padding:.28rem .65rem;}
+  .badge-cat-Corrección{background:#fbeaea;color:var(--danger);}
+  .badge-cat-Mejora{background:#fdf3e5;color:var(--warn);}
+  .badge-cat-Nuevo{background:var(--accent-soft);color:var(--accent);}
+
+  .badge-prio-Alta{background:#fbeaea;color:var(--danger);}
+  .badge-prio-Media{background:#fdf3e5;color:var(--warn);}
+  .badge-prio-Baja{background:#eef1f3;color:var(--ink-soft);}
+
+  .estado-select{
+    border-radius:20px;font-weight:600;font-size:.75rem;padding:.25rem .5rem;
+    border:1px solid var(--line);background:#fff;
+  }
+  .estado-Pendiente{color:var(--danger);}
+  .estado-En.Proceso{color:var(--warn);}
+  .estado-Completado{color:var(--accent);}
+
+  .req-actions button{
+    border:none;background:none;color:var(--ink-soft);font-size:.95rem;padding:.15rem .3rem;
+  }
+  .req-actions button:hover{color:var(--accent);}
+
+  .empty-state{
+    text-align:center;padding:3rem 1rem;color:var(--ink-soft);
+  }
+  .empty-state i{font-size:1.8rem;margin-bottom:.5rem;display:block;}
+
+  .modal-content{border-radius:14px;border:none;}
+  .modal-header{border-bottom:1px solid var(--line);}
+  .modal-footer{border-top:1px solid var(--line);}
+  label{font-size:.83rem;font-weight:500;margin-bottom:.25rem;}
+  .form-control, .form-select{border-radius:8px;border:1px solid var(--line);font-size:.88rem;}
+  .form-control:focus, .form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+
+  @media (max-width: 860px){
+    .sidebar{position:static;width:100%;min-height:auto;}
+    .main{margin-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">SR</div>
+    <div class="brand-name">Seguimiento</div>
+  </div>
+
+  <div class="sidebar-label">Sistemas</div>
+  <div id="sistemasList"></div>
+  <button class="btn-new-sistema" id="btnNuevoSistema"><i class="bi bi-plus-lg"></i> Nuevo sistema</button>
+
+  <div class="user-box">
+    <div>
+      <div class="user-name" id="userName">—</div>
+      <div class="user-rol" id="userRol">—</div>
+    </div>
+    <button class="btn btn-sm" id="btnLogout" title="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-header">
+    <div>
+      <div class="page-title" id="pageTitle">Todos los sistemas</div>
+      <div class="page-subtitle" id="pageSubtitle">Selecciona un sistema en la barra lateral para enfocarte, o revisa todos los requerimientos aquí.</div>
+    </div>
+    <button class="btn-accent" id="btnNuevoReq"><i class="bi bi-plus-lg"></i> Nuevo requerimiento</button>
+  </div>
+
+  <div class="filters">
+    <input type="text" id="fBuscar" placeholder="Buscar por título o módulo..." style="min-width:220px;">
+    <select id="fEstado">
+      <option value="">Todos los estados</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="En Proceso">En Proceso</option>
+      <option value="Completado">Completado</option>
+    </select>
+    <select id="fCategoria">
+      <option value="">Todas las categorías</option>
+      <option value="Corrección">Corrección</option>
+      <option value="Mejora">Mejora</option>
+      <option value="Nuevo">Nuevo</option>
+    </select>
+    <select id="fPrioridad">
+      <option value="">Todas las prioridades</option>
+      <option value="Alta">Alta</option>
+      <option value="Media">Media</option>
+      <option value="Baja">Baja</option>
+    </select>
+  </div>
+
+  <div id="reqList"></div>
+</div>
+
+<!-- Modal: Nuevo/Editar Sistema -->
+<div class="modal fade" id="modalSistema" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSistemaTitle">Nuevo sistema</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="sisId">
+        <div class="mb-3">
+          <label>Nombre del sistema</label>
+          <input type="text" class="form-control" id="sisNombre" placeholder="Ej: Sistema de Gestión Docente">
+        </div>
+        <div class="mb-3">
+          <label>Descripción (opcional)</label>
+          <textarea class="form-control" id="sisDescripcion" rows="2" placeholder="Breve contexto del sistema"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-danger btn-sm me-auto d-none" id="btnEliminarSistema">Eliminar sistema</button>
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn-accent" id="btnGuardarSistema">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nuevo/Editar Requerimiento -->
+<div class="modal fade" id="modalReq" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalReqTitle">Nuevo requerimiento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reqId">
+        <div class="mb-3">
+          <label>Sistema</label>
+          <select class="form-select" id="reqSistema"></select>
+        </div>
+        <div class="mb-3">
+          <label>Título</label>
+          <input type="text" class="form-control" id="reqTitulo" placeholder="Ej: Corregir extracción de experiencia laboral">
+        </div>
+        <div class="mb-3">
+          <label>Descripción</label>
+          <textarea class="form-control" id="reqDescripcion" rows="3" placeholder="Detalle del requerimiento"></textarea>
+        </div>
+        <div class="mb-3">
+          <label>Módulo / Vista (opcional)</label>
+          <input type="text" class="form-control" id="reqModulo" placeholder="Ej: Vista Docente">
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label>Categoría</label>
+            <select class="form-select" id="reqCategoria">
+              <option>Corrección</option>
+              <option>Mejora</option>
+              <option>Nuevo</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>Prioridad</label>
+            <select class="form-select" id="reqPrioridad">
+              <option>Alta</option>
+              <option selected>Media</option>
+              <option>Baja</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>Responsable (opcional)</label>
+            <input type="text" class="form-control" id="reqResponsable" placeholder="Nombre">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-danger btn-sm me-auto d-none" id="btnEliminarReq">Eliminar</button>
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn-accent" id="btnGuardarReq">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="config.js"></script>
+<script>
+  // ---------- Sesión ----------
+  const usuario = localStorage.getItem('sr_usuario');
+  const nombre = localStorage.getItem('sr_nombre');
+  const rol = localStorage.getItem('sr_rol');
+  if (!usuario) window.location.href = 'login.html';
+
+  document.getElementById('userName').textContent = nombre || usuario;
+  document.getElementById('userRol').textContent = rol || '';
+  const puedeEditar = (rol === 'ADMIN' || rol === 'EDITOR');
+  const puedeEliminarSistema = (rol === 'ADMIN');
+  if (!puedeEditar) {
+    document.getElementById('btnNuevoReq').classList.add('d-none');
+    document.getElementById('btnNuevoSistema').classList.add('d-none');
+  }
+
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    localStorage.removeItem('sr_usuario');
+    localStorage.removeItem('sr_nombre');
+    localStorage.removeItem('sr_rol');
+    window.location.href = 'login.html';
+  });
+
+  // ---------- Estado local ----------
+  let sistemas = [];
+  let requerimientos = [];
+  let sistemaActivo = ''; // '' = todos
+
+  // ---------- API ----------
+  async function api(action, params = {}) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...params })
+    });
+    return res.json();
+  }
+
+  async function cargarSistemas() {
+    const data = await api('get_sistemas');
+    if (data.status === 'success') {
+      sistemas = data.data;
+      renderSistemas();
+      renderSelectSistemas();
+    }
+  }
+
+  async function cargarRequerimientos() {
+    const data = await api('get_requerimientos', { idSistema: sistemaActivo });
+    if (data.status === 'success') {
+      requerimientos = data.data;
+      renderRequerimientos();
+    }
+  }
+
+  // ---------- Render sidebar ----------
+  function renderSistemas() {
+    const list = document.getElementById('sistemasList');
+    let html = `<div class="sistema-item ${sistemaActivo==='' ? 'active':''}" onclick="seleccionarSistema('')">
+      <span>Todos</span></div>`;
+    sistemas.forEach(s => {
+      const activo = sistemaActivo === s.ID ? 'active' : '';
+      const pendientesEnProceso = (s.pendientes || 0) + (s.enProceso || 0);
+      html += `<div class="sistema-item ${activo}" onclick="seleccionarSistema('${s.ID}')">
+        <span>${escapeHtml(s.Nombre)}</span>
+        <span class="count">${pendientesEnProceso}</span>
+      </div>`;
+    });
+    list.innerHTML = html;
+  }
+
+  function renderSelectSistemas() {
+    const select = document.getElementById('reqSistema');
+    select.innerHTML = sistemas.map(s => `<option value="${s.ID}">${escapeHtml(s.Nombre)}</option>`).join('');
+  }
+
+  window.seleccionarSistema = function(id) {
+    sistemaActivo = id;
+    renderSistemas();
+    const header = document.getElementById('pageTitle');
+    const sub = document.getElementById('pageSubtitle');
+    if (id === '') {
+      header.textContent = 'Todos los sistemas';
+      sub.textContent = 'Requerimientos de todos los sistemas registrados.';
+    } else {
+      const s = sistemas.find(x => x.ID === id);
+      header.textContent = s ? s.Nombre : 'Sistema';
+      sub.textContent = s && s.Descripcion ? s.Descripcion : 'Requerimientos de este sistema.';
+    }
+    cargarRequerimientos();
+  };
+
+  // ---------- Render requerimientos ----------
+  function renderRequerimientos() {
+    const buscar = document.getElementById('fBuscar').value.toLowerCase();
+    const fEstado = document.getElementById('fEstado').value;
+    const fCategoria = document.getElementById('fCategoria').value;
+    const fPrioridad = document.getElementById('fPrioridad').value;
+
+    let filtrados = requerimientos.filter(r => {
+      if (fEstado && r.Estado !== fEstado) return false;
+      if (fCategoria && r.Categoria !== fCategoria) return false;
+      if (fPrioridad && r.Prioridad !== fPrioridad) return false;
+      if (buscar) {
+        const texto = (r.Titulo + ' ' + (r.Modulo||'')).toLowerCase();
+        if (!texto.includes(buscar)) return false;
+      }
+      return true;
+    });
+
+    const list = document.getElementById('reqList');
+    if (filtrados.length === 0) {
+      list.innerHTML = `<div class="empty-state"><i class="bi bi-clipboard-check"></i>No hay requerimientos que coincidan con los filtros.</div>`;
+      return;
+    }
+
+    list.innerHTML = filtrados.map(r => {
+      const sistemaNombre = sistemaActivo === '' ? (sistemas.find(s => s.ID === r.IDSistema)?.Nombre || '') : '';
+      return `
+      <div class="req-card">
+        <div class="req-top">
+          <div style="flex:1;">
+            <div class="req-title">${escapeHtml(r.Titulo)} ${sistemaNombre ? `<span class="text-muted fw-normal" style="font-size:.78rem;">· ${escapeHtml(sistemaNombre)}</span>` : ''}</div>
+            ${r.Descripcion ? `<div class="req-desc">${escapeHtml(r.Descripcion)}</div>` : ''}
+            <div class="req-meta">
+              <span class="badge-pill badge-cat-${r.Categoria}">${r.Categoria}</span>
+              <span class="badge-pill badge-prio-${r.Prioridad}">${r.Prioridad}</span>
+              ${r.Modulo ? `<span class="badge-pill" style="background:#eef1f3;color:var(--ink-soft);">${escapeHtml(r.Modulo)}</span>` : ''}
+              ${r.Responsable ? `<span class="badge-pill" style="background:#eef1f3;color:var(--ink-soft);"><i class="bi bi-person"></i> ${escapeHtml(r.Responsable)}</span>` : ''}
+              <select class="estado-select" onchange="cambiarEstado('${r.ID}', this.value)" ${!puedeEditar ? 'disabled' : ''}>
+                <option ${r.Estado==='Pendiente'?'selected':''}>Pendiente</option>
+                <option ${r.Estado==='En Proceso'?'selected':''}>En Proceso</option>
+                <option ${r.Estado==='Completado'?'selected':''}>Completado</option>
+              </select>
+            </div>
+          </div>
+          ${puedeEditar ? `
+          <div class="req-actions">
+            <button onclick='abrirEditarReq(${JSON.stringify(r).replace(/'/g,"&#39;")})' title="Editar"><i class="bi bi-pencil"></i></button>
+          </div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.cambiarEstado = async function(id, estado) {
+    await api('update_estado_requerimiento', { id, estado });
+    await cargarRequerimientos();
+    await cargarSistemas();
+  };
+
+  // ---------- Filtros ----------
+  ['fBuscar','fEstado','fCategoria','fPrioridad'].forEach(id => {
+    document.getElementById(id).addEventListener('input', renderRequerimientos);
+    document.getElementById(id).addEventListener('change', renderRequerimientos);
+  });
+
+  // ---------- Modal Sistema ----------
+  const modalSistema = new bootstrap.Modal(document.getElementById('modalSistema'));
+  document.getElementById('btnNuevoSistema').addEventListener('click', () => {
+    document.getElementById('modalSistemaTitle').textContent = 'Nuevo sistema';
+    document.getElementById('sisId').value = '';
+    document.getElementById('sisNombre').value = '';
+    document.getElementById('sisDescripcion').value = '';
+    document.getElementById('btnEliminarSistema').classList.add('d-none');
+    modalSistema.show();
+  });
+
+  document.getElementById('btnGuardarSistema').addEventListener('click', async () => {
+    const id = document.getElementById('sisId').value;
+    const nombreVal = document.getElementById('sisNombre').value.trim();
+    const descripcion = document.getElementById('sisDescripcion').value.trim();
+    if (!nombreVal) { alert('El nombre es obligatorio'); return; }
+
+    if (id) {
+      await api('update_sistema', { id, nombre: nombreVal, descripcion });
+    } else {
+      await api('create_sistema', { nombre: nombreVal, descripcion });
+    }
+    modalSistema.hide();
+    await cargarSistemas();
+  });
+
+  document.getElementById('btnEliminarSistema').addEventListener('click', async () => {
+    const id = document.getElementById('sisId').value;
+    if (!confirm('¿Eliminar este sistema? Solo se puede si no tiene requerimientos.')) return;
+    const res = await api('delete_sistema', { id });
+    if (res.status !== 'success') { alert(res.message); return; }
+    modalSistema.hide();
+    sistemaActivo = '';
+    await cargarSistemas();
+    await cargarRequerimientos();
+  });
+
+  // Click en nombre del sistema activo para editarlo (doble click)
+  document.getElementById('sistemasList').addEventListener('dblclick', (e) => {
+    const item = e.target.closest('.sistema-item');
+    if (!item || !puedeEditar) return;
+    const idx = Array.from(item.parentNode.children).indexOf(item) - 1; // -1 por "Todos"
+    if (idx < 0) return;
+    const s = sistemas[idx];
+    if (!s) return;
+    document.getElementById('modalSistemaTitle').textContent = 'Editar sistema';
+    document.getElementById('sisId').value = s.ID;
+    document.getElementById('sisNombre').value = s.Nombre;
+    document.getElementById('sisDescripcion').value = s.Descripcion || '';
+    document.getElementById('btnEliminarSistema').classList.toggle('d-none', !puedeEliminarSistema);
+    modalSistema.show();
+  });
+
+  // ---------- Modal Requerimiento ----------
+  const modalReq = new bootstrap.Modal(document.getElementById('modalReq'));
+
+  document.getElementById('btnNuevoReq').addEventListener('click', () => {
+    if (sistemas.length === 0) { alert('Primero crea un sistema.'); return; }
+    document.getElementById('modalReqTitle').textContent = 'Nuevo requerimiento';
+    document.getElementById('reqId').value = '';
+    document.getElementById('reqTitulo').value = '';
+    document.getElementById('reqDescripcion').value = '';
+    document.getElementById('reqModulo').value = '';
+    document.getElementById('reqCategoria').value = 'Nuevo';
+    document.getElementById('reqPrioridad').value = 'Media';
+    document.getElementById('reqResponsable').value = '';
+    document.getElementById('reqSistema').value = sistemaActivo || sistemas[0].ID;
+    document.getElementById('btnEliminarReq').classList.add('d-none');
+    modalReq.show();
+  });
+
+  window.abrirEditarReq = function(r) {
+    document.getElementById('modalReqTitle').textContent = 'Editar requerimiento';
+    document.getElementById('reqId').value = r.ID;
+    document.getElementById('reqSistema').value = r.IDSistema;
+    document.getElementById('reqTitulo').value = r.Titulo;
+    document.getElementById('reqDescripcion').value = r.Descripcion || '';
+    document.getElementById('reqModulo').value = r.Modulo || '';
+    document.getElementById('reqCategoria').value = r.Categoria;
+    document.getElementById('reqPrioridad').value = r.Prioridad;
+    document.getElementById('reqResponsable').value = r.Responsable || '';
+    document.getElementById('btnEliminarReq').classList.remove('d-none');
+    modalReq.show();
+  };
+
+  document.getElementById('btnGuardarReq').addEventListener('click', async () => {
+    const id = document.getElementById('reqId').value;
+    const payload = {
+      idSistema: document.getElementById('reqSistema').value,
+      titulo: document.getElementById('reqTitulo').value.trim(),
+      descripcion: document.getElementById('reqDescripcion').value.trim(),
+      modulo: document.getElementById('reqModulo').value.trim(),
+      categoria: document.getElementById('reqCategoria').value,
+      prioridad: document.getElementById('reqPrioridad').value,
+      responsable: document.getElementById('reqResponsable').value.trim()
+    };
+    if (!payload.titulo) { alert('El título es obligatorio'); return; }
+
+    if (id) {
+      await api('update_requerimiento', { id, ...payload });
+    } else {
+      await api('create_requerimiento', payload);
+    }
+    modalReq.hide();
+    await cargarRequerimientos();
+    await cargarSistemas();
+  });
+
+  document.getElementById('btnEliminarReq').addEventListener('click', async () => {
+    const id = document.getElementById('reqId').value;
+    if (!confirm('¿Eliminar este requerimiento?')) return;
+    await api('delete_requerimiento', { id });
+    modalReq.hide();
+    await cargarRequerimientos();
+    await cargarSistemas();
+  });
+
+  // ---------- Utils ----------
+  function escapeHtml(str) {
+    if (str === undefined || str === null) return '';
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ---------- Init ----------
+  (async function init(){
+    await cargarSistemas();
+    await cargarRequerimientos();
+  })();
+</script>
+</body>
+</html>
