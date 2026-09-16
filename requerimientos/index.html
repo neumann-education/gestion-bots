@@ -703,16 +703,31 @@
 
     // Subir imágenes nuevas a Drive antes de guardar el requerimiento
     const urlsSubidas = [];
+    const erroresSubida = [];
     for (let i = 0; i < imagenesNuevas.length; i++) {
       btn.textContent = `Subiendo imagen ${i + 1} de ${imagenesNuevas.length}...`;
       const img = imagenesNuevas[i];
       const base64 = img.previewUrl.split(',')[1];
-      const res = await api('upload_imagen', {
-        imagenBase64: base64,
-        nombreArchivo: img.file.name,
-        tipoMime: img.file.type
-      });
-      if (res.status === 'success') urlsSubidas.push(res.url);
+      try {
+        const res = await api('upload_imagen', {
+          imagenBase64: base64,
+          nombreArchivo: img.file.name,
+          tipoMime: img.file.type
+        });
+        if (res.status === 'success') {
+          urlsSubidas.push(res.url);
+        } else {
+          console.error('Fallo al subir imagen', img.file.name, res);
+          erroresSubida.push(`${img.file.name}: ${res.message || 'error desconocido'}`);
+        }
+      } catch (err) {
+        console.error('Error de red subiendo imagen', img.file.name, err);
+        erroresSubida.push(`${img.file.name}: error de conexión`);
+      }
+    }
+    if (erroresSubida.length) {
+      alert('No se pudieron subir estas imágenes:\n\n' + erroresSubida.join('\n') +
+        '\n\nEl requerimiento se guardará igual, pero revisa la URL del backend y los permisos de Drive.');
     }
     btn.textContent = 'Guardando...';
 
