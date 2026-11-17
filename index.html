@@ -560,6 +560,7 @@
     const SESSION_KEY = 'nexus_session';
     let currentUser = null; // { usuario, nombre, rol }
 
+    function credenciales() { return { usuario: currentUser.usuario, password: currentUser.password }; }
     function canEdit() { return currentUser && ROLES_EDICION.includes(String(currentUser.rol).toUpperCase()); }
 
     // Escapa texto para insertarlo de forma segura dentro de HTML/atributos,
@@ -594,7 +595,7 @@
 
         const saved = sessionStorage.getItem(SESSION_KEY);
         if (saved) {
-            try { currentUser = JSON.parse(saved); showApp(); }
+            try { currentUser = JSON.parse(saved); if (!currentUser.password) throw new Error('sesion antigua'); showApp(); }
             catch(e) { sessionStorage.removeItem(SESSION_KEY); }
         }
 
@@ -619,7 +620,7 @@
             });
             const res = await response.json();
             if (res.status === 'success') {
-                currentUser = { usuario: res.usuario, nombre: res.nombre, rol: res.rol };
+                currentUser = { usuario: res.usuario, nombre: res.nombre, rol: res.rol, password };
                 sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
                 showApp();
             } else {
@@ -675,7 +676,7 @@
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'getUsuarios', rol: currentUser.rol })
+                body: JSON.stringify({ action: 'getUsuarios', ...credenciales() })
             });
             const res = await response.json();
             loadingLabel.innerText = '';
@@ -725,7 +726,7 @@
             const response = await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'enviarAccesos', rol: currentUser.rol, destinatarios })
+                body: JSON.stringify({ action: 'enviarAccesos', ...credenciales(), destinatarios })
             });
             const res = await response.json();
             if (res.status === 'success') {
@@ -754,7 +755,7 @@
             const response = await fetch(API_URL, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: 'getData' }) 
+                body: JSON.stringify({ action: 'getData', ...credenciales() }) 
             });
             const res = await response.json();
             
@@ -767,6 +768,7 @@
                 renderProjects(); 
             } else {
                 console.error("Error Servidor:", res);
+                if (res.sesionInvalida) handleLogout();
                 Swal.fire('Error', res.message, 'error');
             }
         } catch (e) { 
@@ -1182,7 +1184,7 @@
 
         showLoader(true);
         try {
-            const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveProject', data: data, usuario: currentUser.usuario, rol: currentUser.rol }) });
+            const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveProject', data: data, ...credenciales() }) });
             const res = await response.json();
 
             if (res.status === 'success') {
