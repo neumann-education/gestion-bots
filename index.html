@@ -35,11 +35,21 @@
     .icon-orange { background: rgba(255, 181, 71, 0.1); color: var(--accent-orange); }
     .icon-green { background: rgba(5, 205, 153, 0.1); color: var(--accent-green); }
 
-    .bot-card { transition: all 0.3s; cursor: pointer; border-bottom: 4px solid transparent; }
+    /* CARDS: el color del canal (WhatsApp / Llamadas) manda en la card; el estado va aparte */
+    .bot-card { --canal: #64748B; --canal-soft: rgba(100,116,139,0.10); overflow: hidden; cursor: pointer; transition: all 0.3s; border-left: 4px solid var(--canal); }
     .bot-card:hover { transform: translateY(-5px); box-shadow: 0 25px 50px rgba(112, 144, 176, 0.15); background: white; }
-    .bot-card.kpi-blue { border-bottom-color: var(--accent-blue); }
-    .bot-card.kpi-orange { border-bottom-color: var(--accent-orange); }
-    .bot-card.kpi-green { border-bottom-color: var(--accent-green); }
+    .canal-wa { --canal: #16A34A; --canal-soft: rgba(22,163,74,0.10); }
+    .canal-call { --canal: #7C3AED; --canal-soft: rgba(124,58,237,0.10); }
+    .canal-social { --canal: #0EA5E9; --canal-soft: rgba(14,165,233,0.10); }
+    .canal-banner { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--canal-soft); color: var(--canal); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
+    .canal-banner i { font-size: 1rem; }
+    .canal-pill { display: inline-flex; align-items: center; background: var(--canal-soft); color: var(--canal); font-size: 0.7rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+    .estado-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: 0; text-transform: none; }
+    .estado-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .estado-prod { background: rgba(5,205,153,0.14); color: #059669; }
+    .estado-dev { background: rgba(255,181,71,0.22); color: #B7791F; }
+    .estado-off { background: #eef2f7; color: var(--text-muted); }
+    .bot-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; line-height: 1.3; }
 
     .section-title { font-size: 0.7rem; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; }
     
@@ -70,12 +80,20 @@
     .copy-btn:hover { color: var(--accent-blue); border-color: var(--accent-blue); }
     
     /* TABS ESTILO MINIMALISTA (Foto 1) */
-    .custom-tabs-container { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px; display: inline-flex; }
-    .custom-tabs-container .nav-link { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-radius: 8px; padding: 6px 16px; margin: 0 2px; transition: 0.2s;}
+    .custom-tabs-container { display: flex; width: fit-content; max-width: 100%; overflow-x: auto; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px; scrollbar-width: none; }
+    .custom-tabs-container::-webkit-scrollbar { display: none; }
+    .custom-tabs-container .nav-link { white-space: nowrap; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-radius: 8px; padding: 6px 16px; margin: 0 2px; transition: 0.2s; }
     .custom-tabs-container .nav-link.active { background: #ffffff; color: var(--accent-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+    @media (max-width: 575.98px) { .custom-tabs-container .nav-link { padding: 6px 11px; font-size: 0.8rem; } }
 
     /* INPUTS DINAMICOS RESPONSIVE */
-    .dynamic-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #ffffff; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .dynamic-row { display: flex; gap: 6px; align-items: flex-start; background: #ffffff; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .row-fields { display: grid; gap: 6px; flex: 1; min-width: 0; grid-template-columns: 1fr; }
+    @media (min-width: 768px) {
+        .row-fields.f-url { grid-template-columns: 130px 1fr 1.8fr; }
+        .row-fields.f-acceso { grid-template-columns: repeat(3, 1fr); }
+        .row-fields.f-archivo { grid-template-columns: 1fr 1.8fr; }
+    }
 
     .image-dropzone { border: 2px dashed #CBD5E1; border-radius: 10px; cursor: pointer; background: #f8fafc; transition: 0.2s; }
     .image-dropzone:hover { background: #f1f5f9; border-color: var(--accent-blue); }
@@ -97,6 +115,37 @@
     .brand-chip { background: #ffffff; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 600; font-size: 0.8rem; padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: 0.2s; }
     .brand-chip:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
     .brand-chip.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+
+    /* ===== MODALES ADAPTATIVOS ===== */
+    /* Bootstrap solo ensancha .modal-xl desde 1200px; entre 576 y 1199px se quedaba en 500px. */
+    .modal-adaptive { --bs-modal-width: min(1140px, 96vw); }
+
+    /* ===== PROMPTS ===== */
+    .prompts-toolbar { position: sticky; top: 0; z-index: 5; background: #ffffff; padding: 6px 0 10px; margin-bottom: 8px; }
+    .prompt-card { background: #fff; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 8px; }
+    .prompt-card.open { border-color: rgba(67,24,255,0.35); }
+    .prompt-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+    .prompt-chevron { font-size: 0.7rem; color: var(--text-muted); transition: transform 0.2s; }
+    .prompt-card.open .prompt-chevron { transform: rotate(90deg); }
+    .prompt-title { font-weight: 700; font-size: 0.85rem; }
+    .prompt-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; }
+    .prompt-body { display: none; padding: 0 12px 12px; }
+    .prompt-card.open .prompt-body { display: block; }
+    .prompt-textarea { min-height: 220px; max-height: 70vh; resize: vertical; font-size: 0.8rem; line-height: 1.5; }
+    .prompt-textarea.grande { height: 65vh; }
+    .prompt-count { font-size: 0.7rem; color: var(--text-muted); }
+    .prompt-count.excedido { color: #E53E3E; font-weight: 700; }
+    .prompt-view-body { max-height: 50vh; overflow: auto; font-size: 0.8rem; white-space: pre-wrap; }
+    .cat-badge { display: inline-flex; align-items: center; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+    .cat-vacia { background: #f1f5f9; color: var(--text-muted); font-weight: 600; }
+    .brand-chip.chip-sm { font-size: 0.72rem; padding: 4px 12px; }
+    .chip-n { opacity: 0.6; margin-left: 3px; }
+    /* en móvil los chips de categoría van en una sola línea con scroll horizontal */
+    @media (max-width: 767.98px) {
+        #promptsFiltro, #viewPromptsFiltro { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+        #promptsFiltro::-webkit-scrollbar, #viewPromptsFiltro::-webkit-scrollbar { display: none; }
+        #promptsFiltro .brand-chip, #viewPromptsFiltro .brand-chip { flex-shrink: 0; white-space: nowrap; }
+    }
     </style>
 </head>
 <body>
@@ -125,7 +174,7 @@
     </div>
 
     <div id="appShell" style="display:none;">
-    <nav class="navbar navbar-custom glass-panel d-flex justify-content-between align-items-center shadow-sm m-3 px-4 py-3">
+    <nav class="navbar navbar-custom glass-panel d-flex justify-content-between align-items-center shadow-sm m-2 m-md-3 px-3 px-md-4 py-3">
         <a class="navbar-brand fs-4 m-0 d-flex align-items-center" href="#">
             <div class="kpi-icon-wrapper icon-blue me-3"><i class="fa-solid fa-robot"></i></div>
             <div><span class="fw-bold">Nexus</span><span class="fw-medium fs-6 d-block text-muted" style="line-height: 0.8;">Bot Workspace</span></div>
@@ -143,7 +192,7 @@
 
     <main class="container-fluid px-3 px-md-5 pb-5 mt-4">
         <div class="glass-panel p-3 mb-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
-            <input type="text" id="searchInput" class="form-control glass-input" style="max-width: 300px; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar bot, marca..." onkeyup="filterProjects()">
+            <input type="text" id="searchInput" class="form-control glass-input" style="max-width: 300px; width: 100%; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar bot, marca..." onkeyup="filterProjects()">
             <span class="badge bg-light text-dark border px-3 py-2 fs-6 rounded-pill" id="totalCount">0 Proyectos</span>
         </div>
         <div class="d-flex flex-wrap gap-2 mb-2" id="marcaChips"></div>
@@ -156,12 +205,13 @@
     <!-- MODAL 1: MODO VISTA (UNA SOLA COLUMNA LATERAL)            -->
     <!-- ========================================================= -->
     <div class="modal fade" id="viewModal" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-adaptive modal-fullscreen-md-down modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content glass-modal border-0 shadow-lg">
                 
-                <div class="modal-header border-bottom-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-start">
+                <div class="modal-header border-bottom-0 pb-0 pt-3 pt-md-4 px-3 px-md-4 d-flex justify-content-between align-items-start gap-2">
                     <div>
-                        <h3 class="fw-bold mb-1 text-dark" id="viewNombre">Proyecto</h3>
+                        <span id="viewCanal" class="canal-pill mb-2"></span>
+                        <h3 class="fw-bold mb-1 text-dark" id="viewNombre" style="font-size: clamp(1.2rem, 4vw, 1.75rem);">Proyecto</h3>
                         <div class="text-muted small d-flex flex-wrap gap-3 mt-2" style="font-size: 0.8rem;">
                             <span><i class="fa-regular fa-calendar me-1"></i> Creado: <b id="viewFechaC">--</b></span>
                             <span><i class="fa-solid fa-clock-rotate-left me-1"></i> Modif: <b id="viewFechaImpl">--</b></span>
@@ -169,12 +219,12 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <button class="btn btn-dark btn-sm px-3 py-2 fw-bold shadow-sm" id="btnEditCurrent" style="border-radius: 8px;"><i class="fa-solid fa-pen-to-square me-1"></i> Editar</button>
+                        <button class="btn btn-dark btn-sm px-3 py-2 fw-bold shadow-sm text-nowrap" id="btnEditCurrent" style="border-radius: 8px;" title="Editar"><i class="fa-solid fa-pen-to-square"></i><span class="d-none d-sm-inline ms-1">Editar</span></button>
                         <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                     </div>
                 </div>
                 
-                <div class="modal-body p-4 pt-3">
+                <div class="modal-body p-3 p-md-4 pt-3">
                     <hr class="text-muted opacity-25 mt-0 mb-4">
                     
                     <div class="row g-0">
@@ -184,6 +234,7 @@
                             <div class="view-card" id="viewArgumentario">--</div>
 
                             <div class="section-title mt-4">PROMPTS DEL BOT</div>
+                            <div id="viewPromptsFiltro" class="d-flex flex-wrap gap-2 mb-2"></div>
                             <div id="viewPrompts" class="mb-4"></div>
 
                             <div class="section-title mt-4">EVIDENCIAS ADJUNTAS</div>
@@ -246,21 +297,21 @@
     <!-- MODAL 2: MODO FORMULARIO (DISEÑO LIMPIO FOTO 1)-->
     <!-- ============================================== -->
     <div class="modal fade" id="formModal" data-bs-backdrop="static" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-adaptive modal-fullscreen-md-down modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content glass-modal border-0 shadow-lg">
-                <div class="modal-header pb-2 border-bottom-0 pt-4 px-4">
+                <div class="modal-header pb-2 border-bottom-0 pt-3 pt-md-4 px-3 px-md-4">
                     <h4 class="fw-bold mb-0" id="formTitle">Desplegar Proyecto</h4>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 pt-3">
+                <div class="modal-body p-3 p-md-4 pt-3">
                     
                     <!-- Tabs Minimalistas -->
-                    <div class="custom-tabs-container mb-4">
+                    <div class="custom-tabs-container mb-3 mb-md-4">
                         <ul class="nav nav-pills flex-nowrap" style="margin: 0;">
-                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#edit-general">1. Detalles Generales</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-prompts">2. Prompts</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-tech">3. Accesos & Enlaces</button></li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-admin">4. Administrativo</button></li>
+                            <li class="nav-item"><button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#edit-general"><span class="d-md-none">Detalles</span><span class="d-none d-md-inline">1. Detalles Generales</span></button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-prompts"><span class="d-md-none">Prompts</span><span class="d-none d-md-inline">2. Prompts</span> <span class="badge bg-light text-primary border ms-1" id="tabPromptsCount">0</span></button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-tech"><span class="d-md-none">Accesos</span><span class="d-none d-md-inline">3. Accesos &amp; Enlaces</span></button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-admin"><span class="d-md-none">Admin</span><span class="d-none d-md-inline">4. Administrativo</span></button></li>
                         </ul>
                     </div>
 
@@ -303,11 +354,14 @@
 
                             <!-- TAB 2: Prompts del Bot -->
                             <div class="tab-pane fade" id="edit-prompts">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div class="section-title mb-0">PROMPTS REGISTRADOS</div>
-                                    <button type="button" class="btn btn-sm btn-light border py-1" style="font-size: 0.75rem;" onclick="addDynamicRow('promptsContainer', 'prompt')"><i class="fa-solid fa-plus text-primary me-1"></i> Añadir Prompt</button>
+                                <div class="prompts-toolbar">
+                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                        <div class="section-title mb-0">PROMPTS REGISTRADOS</div>
+                                        <button type="button" class="btn btn-sm btn-light border py-1" style="font-size: 0.75rem;" onclick="addPromptCard()"><i class="fa-solid fa-plus text-primary me-1"></i> Añadir Prompt</button>
+                                    </div>
+                                    <div id="promptsFiltro" class="d-flex flex-wrap gap-2"></div>
                                 </div>
-                                <div id="promptsContainer" class="d-flex flex-column gap-2"></div>
+                                <div id="promptsContainer"></div>
                             </div>
 
                             <!-- TAB 3: Tecnologías y Accesos -->
@@ -318,7 +372,7 @@
                                         <select class="form-select glass-input" id="inpProveedor" required>
                                             <option value="">Seleccione...</option>
                                             <option value="Chatfuel">Chatfuel</option>
-                                            <option value="ORAIA">ORAIA</option>
+                                            <option value="RetellIA">RetellIA</option>
                                             <option value="VAPI">VAPI</option>
                                             <option value="n8n">n8n</option>
                                         </select>
@@ -386,7 +440,7 @@
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer px-4 pb-4 pt-2 border-0 bg-transparent">
+                <div class="modal-footer px-3 px-md-4 pb-3 pb-md-4 pt-2 border-0 bg-transparent">
                     <button type="button" class="btn text-muted fw-bold me-2" data-bs-dismiss="modal">Cerrar</button>
                     <button type="button" class="btn-primary-custom" onclick="saveProject()">Guardar Proyecto</button>
                 </div>
@@ -400,14 +454,14 @@
     <div class="modal fade" id="accessMailModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content glass-modal border-0 shadow-lg">
-                <div class="modal-header pb-2 border-bottom-0 pt-4 px-4">
+                <div class="modal-header pb-2 border-bottom-0 pt-3 pt-md-4 px-3 px-md-4">
                     <div>
                         <h4 class="fw-bold mb-0">Enviar Accesos</h4>
                         <p class="text-muted mb-0" style="font-size:0.8rem;">Selecciona a quién enviarle un correo con su usuario y contraseña.</p>
                     </div>
                     <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 pt-3">
+                <div class="modal-body p-3 p-md-4 pt-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <label class="d-flex align-items-center gap-2" style="font-size:0.85rem; cursor:pointer;">
                             <input type="checkbox" id="chkTodosUsuarios" onclick="toggleTodosUsuarios(this)"> Seleccionar todos
@@ -416,7 +470,7 @@
                     </div>
                     <div id="usuariosListContainer" class="d-flex flex-column gap-2" style="max-height:340px; overflow-y:auto;"></div>
                 </div>
-                <div class="modal-footer px-4 pb-4 pt-2 border-0 bg-transparent">
+                <div class="modal-footer px-3 px-md-4 pb-3 pb-md-4 pt-2 border-0 bg-transparent">
                     <button type="button" class="btn text-muted fw-bold me-2" data-bs-dismiss="modal">Cerrar</button>
                     <button type="button" class="btn-primary-custom" id="btnEnviarAccesosConfirm" onclick="sendAccessMails()"><i class="fa-solid fa-paper-plane me-2"></i>Enviar Notificación</button>
                 </div>
@@ -436,6 +490,68 @@
     let arrayImagenesBase64 = [];
     let activeMarca = 'Todas';
     let activeProveedor = 'Todas';
+
+    // ==============================================
+    // CANALES, ESTADOS Y CATEGORÍAS DE PROMPTS
+    // ==============================================
+    const LIMITE_PROMPT = 50000; // máximo de caracteres por celda en Google Sheets
+
+    // Para agregar una categoría nueva basta con sumar una línea aquí
+    const CATEGORIAS_PROMPT = [
+        { id: 'Cerebro principal',      icono: 'fa-brain',           color: '#4318FF' },
+        { id: 'Calificador',            icono: 'fa-filter',          color: '#0EA5E9' },
+        { id: 'Vendedor',               icono: 'fa-handshake',       color: '#16A34A' },
+        { id: 'Soporte',                icono: 'fa-life-ring',       color: '#D97706' },
+        { id: 'Preguntas y respuestas', icono: 'fa-circle-question', color: '#8B5CF6' },
+        { id: 'Redirección de flujo',   icono: 'fa-route',           color: '#DB2777' },
+        { id: 'Base de conocimientos',  icono: 'fa-book',            color: '#0D9488' },
+        { id: 'Landings / Info',        icono: 'fa-globe',           color: '#EA580C' },
+        { id: 'Otro',                   icono: 'fa-tag',             color: '#64748B' }
+    ];
+
+    function infoCategoria(id) { return CATEGORIAS_PROMPT.find(c => c.id === id); }
+
+    // ORAIA ahora es RetellIA: los registros viejos se muestran con el nombre nuevo
+    function nombreProveedor(v) { return String(v || '').toUpperCase() === 'ORAIA' ? 'RetellIA' : v; }
+
+    function getCanal(p) {
+        const tipo = String(p.tipoBot || '').toLowerCase();
+        if (tipo.includes('llamada')) return { clase: 'canal-call', icono: 'fa-solid fa-headset', nombre: 'Llamadas' };
+        if (tipo.includes('fb') || tipo.includes('ig')) return { clase: 'canal-social', icono: 'fa-brands fa-facebook-messenger', nombre: 'FB / IG' };
+        return { clase: 'canal-wa', icono: 'fa-brands fa-whatsapp', nombre: 'WhatsApp' };
+    }
+
+    function getEstadoClase(estado) {
+        if (estado === 'Producción') return 'estado-prod';
+        if (estado === 'En Desarrollo') return 'estado-dev';
+        return 'estado-off';
+    }
+
+    function badgeCategoria(cat) {
+        const c = infoCategoria(cat);
+        if (!c) return '<span class="cat-badge cat-vacia">Sin categoría</span>';
+        return `<span class="cat-badge" style="background:${c.color}1A; color:${c.color};"><i class="fa-solid ${c.icono} me-1"></i>${c.id}</span>`;
+    }
+
+    // '__vacio' representa a los prompts sin categoría
+    function coincideCategoria(cat, filtro) {
+        if (filtro === 'Todas') return true;
+        if (filtro === '__vacio') return !infoCategoria(cat);
+        return cat === filtro;
+    }
+
+    // Chips para filtrar por categoría. Si solo hay una categoría no tiene sentido mostrarlos.
+    function chipsCategorias(lista, activo, fnClick) {
+        const conteo = {};
+        lista.forEach(cat => { const k = infoCategoria(cat) ? cat : '__vacio'; conteo[k] = (conteo[k] || 0) + 1; });
+        const claves = CATEGORIAS_PROMPT.map(c => c.id).concat('__vacio').filter(k => conteo[k]);
+        if (claves.length < 2) return '';
+        return ['Todas'].concat(claves).map(k => {
+            const n = k === 'Todas' ? lista.length : conteo[k];
+            const label = k === '__vacio' ? 'Sin categoría' : k;
+            return `<button type="button" class="brand-chip chip-sm ${k === activo ? 'active' : ''}" data-cat="${k}" onclick="${fnClick}(this.dataset.cat)">${label}<span class="chip-n">${n}</span></button>`;
+        }).join('');
+    }
 
     // ==============================================
     // SESIÓN Y ROLES
@@ -643,7 +759,7 @@
             const res = await response.json();
             
             if (res.status === 'success') { 
-                db.proyectos = res.proyectos || []; 
+                db.proyectos = (res.proyectos || []).map(p => { p.proveedor = nombreProveedor(p.proveedor); return p; }); 
                 db.atributos = res.atributos || [];
                 db.asesoras = res.asesoras || [];
                 renderBrandChips();
@@ -677,7 +793,11 @@
         const proveedores = Array.from(new Set(db.proyectos.map(p => p.proveedor).filter(Boolean))).sort();
         const container = document.getElementById('proveedorChips');
         const opciones = ['Todas', ...proveedores];
-        container.innerHTML = opciones.map(m => `<button type="button" class="brand-chip ${m === activeProveedor ? 'active' : ''}" onclick="selectProveedor('${m.replace(/'/g, "\\'")}')">${m}</button>`).join('');
+        container.innerHTML = opciones.map(m => {
+            const proy = db.proyectos.find(p => p.proveedor === m);
+            const icono = proy ? `<i class="${getCanal(proy).icono} me-1"></i>` : '';
+            return `<button type="button" class="brand-chip ${m === activeProveedor ? 'active' : ''}" onclick="selectProveedor('${m.replace(/'/g, "\\'")}')">${icono}${m}</button>`;
+        }).join('');
     }
 
     function selectProveedor(proveedor) {
@@ -689,7 +809,7 @@
     function renderProjects() {
         const grid = document.getElementById('projectsGrid');
         const term = document.getElementById('searchInput').value.toLowerCase();
-        grid.innerHTML = '';
+        let html = '';
         let count = 0;
 
         db.proyectos.forEach(p => {
@@ -697,26 +817,29 @@
             if (activeProveedor && activeProveedor !== 'Todas' && p.proveedor !== activeProveedor) return;
             if (term && !(`${p.proyecto} ${p.marca} ${p.proveedor}`.toLowerCase().includes(term))) return;
             count++;
-            let isProd = p.estado === 'Producción';
-            let color = isProd ? 'green' : 'orange';
-            
-            // Fix critico para evitar crash si el excel manda un numero
-            let tipoBotStr = String(p.tipoBot || '').toLowerCase();
-            let iconClass = tipoBotStr.includes('llamada') ? 'fa-solid fa-headset' : 'fa-brands fa-whatsapp';
 
-                grid.innerHTML += `
-                    <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-                        <div class="glass-panel bot-card kpi-${color} p-4 h-100" onclick="openViewModal(${p.rowId})">
-                            <div class="d-flex justify-content-between mb-3">
-                                <div class="kpi-icon-wrapper icon-${color}"><i class="${iconClass} fs-5"></i></div>
-                            <span class="badge ${isProd?'bg-success':'bg-warning'} bg-opacity-10 ${isProd?'text-success':'text-warning'} border rounded-pill px-3 py-2 align-self-start">${p.estado}</span>
+            const canal = getCanal(p);
+            const nPrompts = (p.prompts || []).length;
+
+            html += `
+                <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                    <div class="glass-panel bot-card ${canal.clase} h-100" onclick="openViewModal(${p.rowId})">
+                        <div class="canal-banner">
+                            <i class="${canal.icono}"></i><span>${canal.nombre}</span>
+                            <span class="estado-pill ${getEstadoClase(p.estado)} ms-auto"><span class="dot"></span>${escapeHtml(p.estado || '--')}</span>
                         </div>
-                        <span class="badge bg-light text-primary border mb-2">${p.marca || 'Sin Marca'}</span>
-                        <h5 class="fw-bold mb-1 text-truncate">${p.proyecto}</h5>
-                        <p class="small text-muted mb-3"><i class="fa-solid fa-server me-2"></i>${p.proveedor || '--'}</p>
+                        <div class="p-3 p-md-4 pt-3">
+                            <span class="badge bg-light text-primary border mb-2">${escapeHtml(p.marca || 'Sin Marca')}</span>
+                            <h5 class="fw-bold mb-3 bot-title">${escapeHtml(p.proyecto)}</h5>
+                            <div class="d-flex flex-wrap gap-3 small text-muted">
+                                <span><i class="fa-solid fa-server me-1"></i>${escapeHtml(p.proveedor || '--')}</span>
+                                <span><i class="fa-solid fa-terminal me-1"></i>${nPrompts} prompt${nPrompts === 1 ? '' : 's'}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>`;
         });
+        grid.innerHTML = html;
         document.getElementById('totalCount').innerText = `${count} Proyectos`;
     }
 
@@ -733,6 +856,11 @@
         document.getElementById('viewEstado').className = p.estado === 'Producción' ? "text-success" : "text-warning";
 
         document.getElementById('viewProveedor').innerText = p.proveedor || '--';
+
+        const canal = getCanal(p);
+        const pill = document.getElementById('viewCanal');
+        pill.className = 'canal-pill mb-2 ' + canal.clase;
+        pill.innerHTML = `<i class="${canal.icono} me-2"></i>${canal.nombre} &middot; ${escapeHtml(p.proveedor || '--')}`;
         document.getElementById('viewCelular').innerText = p.celular || 'N/A';
 
         // Render Documentos con opción de copiar
@@ -748,25 +876,10 @@
             `).join('');
         } else { argContainer.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin documentos</span>'; }
 
-        // Render Prompts (acordeón simple, visibles para todos los roles)
-        let promptsContainerView = document.getElementById('viewPrompts');
-        if (p.prompts && p.prompts.length > 0) {
-            promptsContainerView.innerHTML = p.prompts.map((pr, i) => `
-                <div class="view-card mb-2">
-                    <div class="d-flex justify-content-between align-items-center" style="cursor:pointer;" onclick="document.getElementById('promptBody_${i}').classList.toggle('d-none')">
-                        <div>
-                            <span class="fw-bold d-block" style="font-size:0.85rem;"><i class="fa-solid fa-message me-2 text-primary"></i>${escapeHtml(pr.nombre || 'Prompt ' + (i+1))}</span>
-                            <span class="text-muted d-block" style="font-size:0.7rem; margin-left:22px;"><i class="fa-regular fa-clock me-1"></i>Actualizado: ${escapeHtml(pr.fecha || 'sin registro')}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="copy-btn js-copy" data-copy-text="${escapeHtml(pr.contenido || '')}" data-copy-label="Prompt" title="Copiar Prompt"><i class="fa-solid fa-copy"></i></button>
-                            <i class="fa-solid fa-chevron-down text-muted" style="font-size:0.7rem;"></i>
-                        </div>
-                    </div>
-                    <div id="promptBody_${i}" class="d-none mt-2 pt-2 border-top text-muted" style="font-size:0.8rem; white-space: pre-wrap;">${escapeHtml(pr.contenido || 'Sin contenido')}</div>
-                </div>
-            `).join('');
-        } else { promptsContainerView.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin prompts registrados</span>'; }
+        // Prompts: agrupables por categoría
+        promptsVista = p.prompts || [];
+        filtroPromptVista = 'Todas';
+        renderPromptsView();
 
         // Evidencias (Imagenes)
         document.getElementById('viewImagenes').innerHTML = (p.imagenes || []).map(img => `<div class="img-preview-box js-zoom" data-img="${escapeHtml(img)}" style="cursor:zoom-in;"><img src="${escapeHtml(img)}"></div>`).join('') || '<span class="text-muted ms-2" style="font-size:0.8rem">No hay evidencias</span>';
@@ -785,7 +898,7 @@
         let atrHtml = db.atributos.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${escapeHtml(a.codigo)}: ${escapeHtml(a.nombre)}</span><span class="text-muted" style="font-size:0.7rem">${escapeHtml(a.funcion)}</span></div>`).join('');
         document.getElementById('viewAtributosList').innerHTML = atrHtml || '<span class="text-muted" style="font-size:0.8rem">No hay atributos.</span>';
 
-        document.getElementById('tituloAsesoras').innerText = `ASESORAS DE ${p.marca.toUpperCase()}`;
+        document.getElementById('tituloAsesoras').innerText = `ASESORAS DE ${(p.marca || '').toUpperCase()}`;
         let aseFilter = db.asesoras.filter(a => a.marca === p.marca);
         let aseHtml = aseFilter.map(a => `<div class="mb-2 border-bottom pb-1"><span class="fw-bold d-block text-dark" style="font-size:0.8rem">${escapeHtml(a.codigo)} - ${escapeHtml(a.nombre)}</span><span class="text-muted" style="font-size:0.7rem">${escapeHtml(a.correo)}</span></div>`).join('');
         document.getElementById('viewAsesorasList').innerHTML = aseHtml || '<span class="text-muted" style="font-size:0.8rem">Sin asesoras.</span>';
@@ -800,6 +913,44 @@
         else document.getElementById('leftViewCol').classList.remove('border-end');
 
         new bootstrap.Modal(document.getElementById('viewModal')).show();
+    }
+
+    let promptsVista = [];
+    let filtroPromptVista = 'Todas';
+
+    function setFiltroPromptVista(cat) { filtroPromptVista = cat; renderPromptsView(); }
+
+    function renderPromptsView() {
+        const cont = document.getElementById('viewPrompts');
+        const filtros = document.getElementById('viewPromptsFiltro');
+        if (promptsVista.length === 0) {
+            filtros.innerHTML = '';
+            cont.innerHTML = '<span class="text-muted" style="font-size:0.8rem">Sin prompts registrados</span>';
+            return;
+        }
+        filtros.innerHTML = chipsCategorias(promptsVista.map(pr => pr.categoria), filtroPromptVista, 'setFiltroPromptVista');
+        cont.innerHTML = promptsVista.map((pr, i) => {
+            if (!coincideCategoria(pr.categoria, filtroPromptVista)) return '';
+            const chars = (pr.contenido || '').length;
+            return `
+                <div class="view-card mb-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2" style="cursor:pointer;" onclick="document.getElementById('promptBody_${i}').classList.toggle('d-none')">
+                        <div style="min-width:0;">
+                            <span class="fw-bold d-block text-truncate" style="font-size:0.85rem;">${escapeHtml(pr.nombre || 'Prompt ' + (i + 1))}</span>
+                            <div class="prompt-meta">
+                                ${badgeCategoria(pr.categoria)}
+                                <span><i class="fa-solid fa-align-left me-1"></i>${chars.toLocaleString('es-PE')} car.</span>
+                                <span><i class="fa-regular fa-clock me-1"></i>${escapeHtml(pr.fecha || 'sin registro')}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                            <button class="copy-btn js-copy" data-copy-text="${escapeHtml(pr.contenido || '')}" data-copy-label="Prompt" title="Copiar Prompt"><i class="fa-solid fa-copy"></i></button>
+                            <i class="fa-solid fa-chevron-down text-muted" style="font-size:0.7rem;"></i>
+                        </div>
+                    </div>
+                    <div id="promptBody_${i}" class="d-none mt-2 pt-2 border-top text-muted prompt-view-body">${escapeHtml(pr.contenido || 'Sin contenido')}</div>
+                </div>`;
+        }).join('');
     }
 
     function renderListBlock(elementId, arr, type) {
@@ -857,7 +1008,7 @@
             (p.argumentario || []).forEach(a => addDynamicRow('argumentariosContainer', 'archivo', a));
             (p.accesos || []).forEach(acc => addDynamicRow('accesosContainer', 'acceso', acc));
             (p.urls || []).forEach(url => addDynamicRow('urlsContainer', 'url', url));
-            (p.prompts || []).forEach(pr => addDynamicRow('promptsContainer', 'prompt', pr));
+            (p.prompts || []).forEach(pr => addPromptCard(pr));
         } else { 
             document.getElementById('formTitle').innerText = "Desplegar Proyecto";
             document.getElementById('formProyecto').reset(); 
@@ -865,36 +1016,131 @@
             addDynamicRow('argumentariosContainer', 'archivo');
             addDynamicRow('accesosContainer', 'acceso');
             addDynamicRow('urlsContainer', 'url');
-            addDynamicRow('promptsContainer', 'prompt');
+            addPromptCard();
         }
+        filtroPromptForm = 'Todas';
+        refrescarPromptsForm();
+        bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#edit-general"]')).show();
         new bootstrap.Modal(document.getElementById('formModal')).show(); 
     }
 
     function addDynamicRow(containerId, type, data = null) {
         const container = document.getElementById(containerId);
         const div = document.createElement('div');
-        div.className = "dynamic-row mb-1";
-        
+        div.className = "dynamic-row";
+        const v = (x) => escapeHtml(x || '');
+        const btnBorrar = `<button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+
         if (type === 'acceso') {
-            div.innerHTML = `<input type="text" class="form-control glass-input dt-tipo flex-grow-1" placeholder="Plataforma" value="${data ? escapeHtml(data.tipo) : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-user flex-grow-1" placeholder="User" value="${data ? escapeHtml(data.user) : ''}" style="min-width:90px"><input type="text" class="form-control glass-input dt-pass flex-grow-1" placeholder="Pass" value="${data ? escapeHtml(data.pass) : ''}" style="min-width:90px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+            div.innerHTML = `<div class="row-fields f-acceso">
+                <input type="text" class="form-control glass-input dt-tipo" placeholder="Plataforma" value="${v(data && data.tipo)}">
+                <input type="text" class="form-control glass-input dt-user" placeholder="User" value="${v(data && data.user)}">
+                <input type="text" class="form-control glass-input dt-pass" placeholder="Pass" value="${v(data && data.pass)}">
+            </div>${btnBorrar}`;
         } else if (type === 'url') {
-            div.innerHTML = `<select class="form-select glass-input dt-tipo flex-grow-1" style="min-width:100px"><option ${data && data.tipo=='Webhook'?'selected':''}>Webhook</option><option ${data && data.tipo=='Drive'?'selected':''}>Drive</option><option ${data && data.tipo=='Otro'?'selected':''}>Otro</option></select><input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre" value="${data ? escapeHtml(data.nombre||'') : ''}" style="min-width:100px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="https://..." value="${data ? escapeHtml(data.link) : ''}" style="min-width:140px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+            div.innerHTML = `<div class="row-fields f-url">
+                <select class="form-select glass-input dt-tipo"><option ${data && data.tipo=='Webhook'?'selected':''}>Webhook</option><option ${data && data.tipo=='Drive'?'selected':''}>Drive</option><option ${data && data.tipo=='Otro'?'selected':''}>Otro</option></select>
+                <input type="text" class="form-control glass-input dt-nombre" placeholder="Nombre" value="${v(data && data.nombre)}">
+                <input type="text" class="form-control glass-input dt-link" placeholder="https://..." value="${v(data && data.link)}">
+            </div>${btnBorrar}`;
         } else if (type === 'archivo') {
-            div.innerHTML = `<input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre Doc/Guion" value="${data ? escapeHtml(data.nombre) : ''}" style="min-width:150px"><input type="text" class="form-control glass-input dt-link flex-grow-1" placeholder="Enlace URL (Drive/Notion)" value="${data ? escapeHtml(data.link) : ''}" style="min-width:200px"><button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
-        } else if (type === 'prompt') {
-            div.className = "d-flex flex-column gap-2 p-2 mb-1";
-            div.style.cssText = "background:#ffffff; border-radius:8px; border:1px solid var(--border-color);";
-            div.innerHTML = `
-                <input type="hidden" class="dt-id" value="${data && data.id ? escapeHtml(data.id) : ''}">
-                <div class="d-flex gap-2 align-items-center">
-                    <input type="text" class="form-control glass-input dt-nombre flex-grow-1" placeholder="Nombre del prompt (Ej. Bienvenida, Objeciones...)" value="${data ? escapeHtml(data.nombre||'') : ''}">
-                    <button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.closest('.dynamic-row-prompt').remove()"><i class="fa-solid fa-trash"></i></button>
-                </div>
-                <textarea class="form-control glass-input dt-contenido" rows="4" placeholder="Contenido del prompt...">${data ? escapeHtml(data.contenido||'') : ''}</textarea>
-                <span class="text-muted" style="font-size:0.7rem;"><i class="fa-regular fa-clock me-1"></i>Última actualización: ${data && data.fecha ? escapeHtml(data.fecha) : 'se registrará al guardar'}</span>`;
-            div.classList.add('dynamic-row-prompt');
+            div.innerHTML = `<div class="row-fields f-archivo">
+                <input type="text" class="form-control glass-input dt-nombre" placeholder="Nombre Doc/Guion" value="${v(data && data.nombre)}">
+                <input type="text" class="form-control glass-input dt-link" placeholder="Enlace URL (Drive/Notion)" value="${v(data && data.link)}">
+            </div>${btnBorrar}`;
         }
         container.appendChild(div);
+    }
+
+    // ==============================================
+    // PROMPTS EN EL FORMULARIO (tarjetas plegables)
+    // ==============================================
+    let filtroPromptForm = 'Todas';
+
+    function setFiltroPromptForm(cat) { filtroPromptForm = cat; refrescarPromptsForm(); }
+
+    // Actualiza chips de categoría, contador de la pestaña y qué tarjetas se ven
+    function refrescarPromptsForm() {
+        const cards = Array.from(document.querySelectorAll('#promptsContainer .dynamic-row-prompt'));
+        const cats = cards.map(c => c.querySelector('.dt-categoria').value);
+        if (!cats.some(c => coincideCategoria(c, filtroPromptForm))) filtroPromptForm = 'Todas';
+        document.getElementById('promptsFiltro').innerHTML = chipsCategorias(cats, filtroPromptForm, 'setFiltroPromptForm');
+        cards.forEach((c, i) => c.classList.toggle('d-none', !coincideCategoria(cats[i], filtroPromptForm)));
+        document.getElementById('tabPromptsCount').innerText = cards.length;
+    }
+
+    function refrescarCabeceraPrompt(card) {
+        const nombre = card.querySelector('.dt-nombre').value.trim();
+        const chars = card.querySelector('.dt-contenido').value.length;
+        card.querySelector('.prompt-title').innerText = nombre || 'Nuevo prompt (sin nombre)';
+        card.querySelector('.prompt-meta').innerHTML = badgeCategoria(card.querySelector('.dt-categoria').value)
+            + `<span>${chars.toLocaleString('es-PE')} car.</span>`
+            + (card.dataset.fecha ? `<span><i class="fa-regular fa-clock me-1"></i>${escapeHtml(card.dataset.fecha)}</span>` : '');
+        const contador = card.querySelector('.prompt-count');
+        contador.innerText = `${chars.toLocaleString('es-PE')} / ${LIMITE_PROMPT.toLocaleString('es-PE')} caracteres`;
+        contador.classList.toggle('excedido', chars > LIMITE_PROMPT);
+    }
+
+    function addPromptCard(data = null) {
+        const container = document.getElementById('promptsContainer');
+        const card = document.createElement('div');
+        // los prompts existentes quedan plegados; el nuevo se abre para escribir
+        card.className = 'prompt-card dynamic-row-prompt' + (data ? '' : ' open');
+        card.dataset.fecha = data && data.fecha ? data.fecha : '';
+        const opciones = CATEGORIAS_PROMPT.map(c => `<option value="${c.id}">${c.id}</option>`).join('');
+        card.innerHTML = `
+            <input type="hidden" class="dt-id">
+            <div class="prompt-head" onclick="this.parentElement.classList.toggle('open')">
+                <i class="fa-solid fa-chevron-right prompt-chevron"></i>
+                <div class="flex-grow-1" style="min-width:0;">
+                    <div class="prompt-title text-truncate"></div>
+                    <div class="prompt-meta"></div>
+                </div>
+                <button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="event.stopPropagation(); eliminarPrompt(this)"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="prompt-body">
+                <div class="row g-2 mb-2">
+                    <div class="col-12 col-md-7"><input type="text" class="form-control glass-input dt-nombre" placeholder="Nombre del prompt (Ej. Bienvenida, Objeciones...)"></div>
+                    <div class="col-12 col-md-5"><select class="form-select glass-input dt-categoria"><option value="">Sin categoría</option>${opciones}</select></div>
+                </div>
+                <textarea class="form-control glass-input dt-contenido prompt-textarea" rows="10" placeholder="Contenido del prompt..."></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2 gap-2">
+                    <span class="prompt-count"></span>
+                    <button type="button" class="btn btn-sm btn-light border py-0" style="font-size:0.75rem;" onclick="ampliarTextarea(this)"><i class="fa-solid fa-expand me-1"></i>Ampliar</button>
+                </div>
+            </div>`;
+
+        // los valores se asignan por JS para no tener que escapar textos de 40 mil caracteres
+        card.querySelector('.dt-id').value = data && data.id ? data.id : '';
+        card.querySelector('.dt-nombre').value = data ? (data.nombre || '') : '';
+        card.querySelector('.dt-categoria').value = data ? (data.categoria || '') : '';
+        card.querySelector('.dt-contenido').value = data ? (data.contenido || '') : '';
+
+        card.addEventListener('input', () => refrescarCabeceraPrompt(card));
+        card.querySelector('.dt-categoria').addEventListener('change', () => { filtroPromptForm = 'Todas'; refrescarPromptsForm(); });
+
+        container.appendChild(card);
+        refrescarCabeceraPrompt(card);
+
+        if (!data) {
+            filtroPromptForm = 'Todas';
+            refrescarPromptsForm();
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.querySelector('.dt-nombre').focus();
+        }
+    }
+
+    function eliminarPrompt(btn) {
+        const card = btn.closest('.dynamic-row-prompt');
+        const nombre = card.querySelector('.dt-nombre').value || 'este prompt';
+        Swal.fire({ title: '¿Eliminar prompt?', text: nombre, icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' })
+            .then(r => { if (r.isConfirmed) { card.remove(); refrescarPromptsForm(); } });
+    }
+
+    function ampliarTextarea(btn) {
+        const ta = btn.closest('.prompt-body').querySelector('.prompt-textarea');
+        const grande = ta.classList.toggle('grande');
+        btn.innerHTML = grande ? '<i class="fa-solid fa-compress me-1"></i>Reducir' : '<i class="fa-solid fa-expand me-1"></i>Ampliar';
     }
 
     function handlePaste(e) {
@@ -920,7 +1166,7 @@
         const accesos = Array.from(document.querySelectorAll('#accesosContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, user: r.querySelector('.dt-user').value, pass: r.querySelector('.dt-pass').value })).filter(a => a.tipo || a.user);
         const urls = Array.from(document.querySelectorAll('#urlsContainer .dynamic-row')).map(r => ({ tipo: r.querySelector('.dt-tipo').value, nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(u => u.link);
         const argumentarios = Array.from(document.querySelectorAll('#argumentariosContainer .dynamic-row')).map(r => ({ nombre: r.querySelector('.dt-nombre').value, link: r.querySelector('.dt-link').value })).filter(a => a.link);
-        const prompts = Array.from(document.querySelectorAll('#promptsContainer .dynamic-row-prompt')).map(r => ({ id: r.querySelector('.dt-id').value, nombre: r.querySelector('.dt-nombre').value, contenido: r.querySelector('.dt-contenido').value })).filter(p => p.nombre || p.contenido);
+        const prompts = Array.from(document.querySelectorAll('#promptsContainer .dynamic-row-prompt')).map(r => ({ id: r.querySelector('.dt-id').value, categoria: r.querySelector('.dt-categoria').value, nombre: r.querySelector('.dt-nombre').value, contenido: r.querySelector('.dt-contenido').value })).filter(p => p.nombre || p.contenido);
 
         const data = {
             editRowId: document.getElementById('editRowId').value, 
