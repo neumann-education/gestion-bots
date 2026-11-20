@@ -128,12 +128,15 @@
                     <div class="progress mb-1"><div class="progress-bar" id="dProgreso" style="width:0%"></div></div>
                     <div class="text-muted mb-3" style="font-size:0.75rem;" id="dProgresoTxt"></div>
 
+                    <div id="dAviso"></div>
                     <div class="d-flex flex-wrap gap-2 mb-4" id="dAcciones"></div>
 
                     <div class="row g-4">
                         <div class="col-12 col-lg-4">
                             <div class="section-title">RITMO DE ENVÍO</div>
                             <div class="view-card" id="dRitmo"></div>
+                            <div class="section-title mt-3">VISTA PREVIA DEL ENVÍO</div>
+                            <div class="view-card" id="dPlan"></div>
                             <div class="section-title mt-3">REGLAS POR ESTADO</div>
                             <div class="view-card" id="dReglas"></div>
                             <div class="section-title mt-3">RESPUESTAS RECIBIDAS</div>
@@ -183,15 +186,14 @@
                 <div class="modal-body p-3 p-md-4 pt-3">
                     <div class="custom-tabs-container mb-3 mb-md-4">
                         <ul class="nav nav-pills flex-nowrap" style="margin:0;">
-                            <li class="nav-item"><button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-datos">1. Datos</button></li>
-                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-contactos">2. Contactos</button></li>
-                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-envio">3. Ritmo de envío</button></li>
-                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reglas">4. Respuestas</button></li>
+                            <li class="nav-item"><button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-datos">1. Datos y contactos</button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-envio" onclick="estimar()">2. Ritmo y vista previa</button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reglas">3. Respuestas</button></li>
                         </ul>
                     </div>
 
                     <div class="tab-content">
-                        <!-- 1. DATOS -->
+                        <!-- 1. DATOS Y CONTACTOS -->
                         <div class="tab-pane fade show active" id="tab-datos">
                             <div class="row g-3">
                                 <div class="col-12 col-md-4">
@@ -204,8 +206,8 @@
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Código (Recupe)</label>
-                                    <input type="text" class="form-control glass-input" id="inpCodigo" placeholder="secundaria1">
-                                    <div class="text-muted mt-1" style="font-size:0.7rem;">Cada lote se llamará <b>código-1</b>, <b>código-2</b>...</div>
+                                    <input type="text" class="form-control glass-input" id="inpCodigo" placeholder="recupesecundaria1-" oninput="actualizarHintCodigo(); estimar()">
+                                    <div class="text-muted mt-1" style="font-size:0.7rem;" id="hintCodigo"></div>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Prefijo de ID</label>
@@ -216,38 +218,39 @@
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Bot de Chatfuel</label>
                                     <select class="form-select glass-input" id="inpBot"></select>
                                 </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label text-muted" style="font-size:0.7rem;">Código de país por defecto</label>
-                                    <input type="text" class="form-control glass-input" id="inpPais" value="51">
-                                </div>
-                                <div class="col-12">
-                                    <a class="text-decoration-none fw-bold" data-bs-toggle="collapse" href="#boxHojaExistente" id="lnkHojaExistente" style="font-size:0.8rem;"><i class="fa-solid fa-table me-1"></i> Usar un Google Sheet que ya existe (opcional)</a>
-                                    <div class="collapse mt-2" id="boxHojaExistente">
-                                        <div class="row g-2">
-                                            <div class="col-12 col-md-7"><input type="text" class="form-control glass-input" id="inpLibro" placeholder="Enlace o ID del Google Sheet"></div>
-                                            <div class="col-12 col-md-5"><input type="text" class="form-control glass-input" id="inpHoja" placeholder="Nombre de la pestaña (ej. Lista Alumnos Secundaria)"></div>
-                                        </div>
-                                        <div class="text-muted mt-1" style="font-size:0.7rem;">Se agregan las columnas que falten. Si lo dejas vacío, se crea un Sheet nuevo para la campaña.</div>
-                                    </div>
-                                </div>
                             </div>
-                        </div>
 
-                        <!-- 2. CONTACTOS -->
-                        <div class="tab-pane fade" id="tab-contactos">
-                            <div class="csv-drop" onclick="document.getElementById('inpArchivo').click()">
-                                <i class="fa-solid fa-file-csv fa-2x text-primary mb-2"></i>
-                                <div class="fw-bold" id="csvNombre">Haz clic para elegir tu archivo CSV</div>
-                                <div class="text-muted" style="font-size:0.75rem;">De 1 a 3000 registros. Acepta separador coma, punto y coma o tabulación.</div>
+                            <hr class="my-4">
+                            <div class="section-title" id="tituloContactos">CONTACTOS</div>
+                            <div class="btn-group mb-3" id="boxFuente">
+                                <button type="button" class="btn btn-sm btn-primary" id="btnFuenteCsv" onclick="elegirFuente('csv')"><i class="fa-solid fa-file-csv me-1"></i> Subir un CSV</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnFuenteSheet" onclick="elegirFuente('sheet')"><i class="fa-solid fa-table me-1"></i> Usar un Google Sheet que ya existe</button>
                             </div>
-                            <input type="file" id="inpArchivo" accept=".csv,.txt" class="d-none" onchange="leerArchivo(this.files[0])">
+
+                            <div id="panelCsv">
+                                <div class="csv-drop" onclick="document.getElementById('inpArchivo').click()">
+                                    <i class="fa-solid fa-file-csv fa-2x text-primary mb-2"></i>
+                                    <div class="fw-bold" id="csvNombre">Haz clic para elegir tu archivo CSV</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">De 1 a 3000 registros. Acepta separador coma, punto y coma o tabulación.</div>
+                                </div>
+                                <input type="file" id="inpArchivo" accept=".csv,.txt" class="d-none" onchange="leerArchivo(this.files[0])">
+                            </div>
+
+                            <div id="panelSheet" style="display:none;">
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-6"><input type="text" class="form-control glass-input" id="inpLibro" placeholder="Enlace o ID del Google Sheet"></div>
+                                    <div class="col-8 col-md-4"><input type="text" class="form-control glass-input" id="inpHoja" placeholder="Nombre de la pestaña (vacío = la primera)"></div>
+                                    <div class="col-4 col-md-2"><button type="button" class="btn btn-dark w-100" style="border-radius:8px;" onclick="leerSheet()"><i class="fa-solid fa-magnifying-glass me-1"></i>Leer</button></div>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:0.72rem;" id="sheetEstado">Se usa ese mismo Sheet: se le agregan las columnas de seguimiento (Recupe, Estado, Estado envío...) y lo demás no se toca. Las filas que ya tengan Estado envío no se vuelven a enviar. El Sheet debe estar compartido con el correo dueño del Apps Script.</div>
+                            </div>
 
                             <div id="mapeoBox" class="mt-3" style="display:none;">
                                 <div class="section-title">¿QUÉ COLUMNA ES CADA DATO?</div>
                                 <div class="row g-2">
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Nombres</label><select class="form-select glass-input" id="mapNombres" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Apellidos</label><select class="form-select glass-input" id="mapApellidos" onchange="procesarContactos()"></select></div>
-                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Celular</label><select class="form-select glass-input" id="mapCelular" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Celular (con código de país)</label><select class="form-select glass-input" id="mapCelular" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">iddeal (opcional)</label><select class="form-select glass-input" id="mapIddeal" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead / opción (opcional)</label><select class="form-select glass-input" id="mapTipo" onchange="procesarContactos()"></select></div>
                                 </div>
@@ -263,7 +266,7 @@
                             <div class="text-muted mt-3" style="font-size:0.8rem;" id="avisoContactosEdicion"></div>
                         </div>
 
-                        <!-- 3. RITMO -->
+                        <!-- 2. RITMO Y VISTA PREVIA -->
                         <div class="tab-pane fade" id="tab-envio">
                             <div class="row g-3">
                                 <div class="col-6 col-md-3">
@@ -287,14 +290,15 @@
                                     <input type="number" min="1" max="24" class="form-control glass-input" id="inpHasta" value="20" oninput="estimar()">
                                 </div>
                             </div>
-                            <div class="view-card mt-3" id="estimacion" style="font-size:0.85rem;"></div>
-                            <div class="text-muted" style="font-size:0.75rem;">
+                            <div class="text-muted mt-2" style="font-size:0.75rem;">
                                 El siguiente envío se programa a <b>intervalo ± minutos aleatorios</b> después del anterior (hora de Lima). Fuera de la ventana horaria no se envía.
                                 Puedes cambiar estos valores en cualquier momento, incluso con la campaña activa.
                             </div>
+                            <div class="section-title mt-4">VISTA PREVIA DEL ENVÍO</div>
+                            <div class="view-card" id="estimacion" style="font-size:0.85rem;"></div>
                         </div>
 
-                        <!-- 4. RESPUESTAS -->
+                        <!-- 3. RESPUESTAS -->
                         <div class="tab-pane fade" id="tab-reglas">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="section-title mb-0">¿QUÉ HACER SEGÚN LA RESPUESTA DEL USUARIO?</div>
@@ -324,8 +328,9 @@
                     </div>
                 </div>
                 <div class="modal-footer px-3 px-md-4 pb-3 pb-md-4 pt-2 border-0 bg-transparent">
+                    <span class="text-muted me-auto d-none d-md-inline" style="font-size:0.75rem;">Guardar no envía nada: la campaña queda en Borrador hasta que pulses «Ejecutar».</span>
                     <button type="button" class="btn text-muted fw-bold me-2" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn-primary-custom" onclick="guardarCampana()">Guardar campaña</button>
+                    <button type="button" class="btn-primary-custom" onclick="guardarCampana()"><i class="fa-solid fa-floppy-disk me-2"></i>Guardar campaña</button>
                 </div>
             </div>
         </div>
@@ -362,7 +367,8 @@
     let filtroC = { filtro: 'todos', busqueda: '', pagina: 1 };
     let editando = null;      // código de la campaña que se edita (null = nueva)
     let csv = { encabezados: [], filas: [] };
-    let nuevos = { validos: [], invalidos: 0, duplicados: 0 };
+    let nuevos = { validos: [], invalidos: 0, duplicados: 0, yaProcesados: 0 };
+    let fuente = 'csv';       // de dónde vienen los contactos: 'csv' o 'sheet'
 
     // ---------- utilidades ----------
     function escapeHtml(str) {
@@ -512,13 +518,22 @@
 
         let btns = '';
         if (puedeEditar) {
-            if (c.estado !== 'Activa') btns += `<button class="btn btn-success btn-sm fw-bold" onclick="cambiarEstado('Activa')"><i class="fa-solid fa-play me-1"></i>Activar</button>`;
+            if (c.estado === 'Borrador') btns += `<button class="btn btn-success fw-bold px-4" onclick="cambiarEstado('Activa')"><i class="fa-solid fa-play me-2"></i>Ejecutar campaña</button>`;
+            if (c.estado === 'Pausada') btns += `<button class="btn btn-success btn-sm fw-bold" onclick="cambiarEstado('Activa')"><i class="fa-solid fa-play me-1"></i>Reanudar</button>`;
             if (c.estado === 'Activa') btns += `<button class="btn btn-warning btn-sm fw-bold" onclick="cambiarEstado('Pausada')"><i class="fa-solid fa-pause me-1"></i>Pausar</button>`;
             if (c.estado === 'Activa') btns += `<button class="btn btn-light border btn-sm fw-bold" onclick="adelantar()"><i class="fa-solid fa-forward me-1"></i>Enviar el siguiente lote ya</button>`;
             if (k.errores > 0 || k.enviando > 0) btns += `<button class="btn btn-light border btn-sm fw-bold" onclick="reintentar()"><i class="fa-solid fa-rotate-right me-1"></i>Reintentar errores</button>`;
             btns += `<button class="btn btn-dark btn-sm fw-bold" onclick="editarActual()"><i class="fa-solid fa-pen-to-square me-1"></i>Editar / agregar contactos</button>`;
         }
         document.getElementById('dAcciones').innerHTML = btns;
+        document.getElementById('dAviso').innerHTML = c.estado === 'Borrador'
+            ? '<div class="alert alert-warning py-2 mb-3" style="font-size:0.82rem;"><i class="fa-solid fa-floppy-disk me-2"></i><b>Guardada como borrador.</b> Todavía no se envió nada: revisa la vista previa y pulsa «Ejecutar campaña».</div>'
+            : '';
+
+        const plan = calcularPlan(pendientes, c.lote, c.intervaloMin, c.horaDesde, c.horaHasta);
+        document.getElementById('dPlan').innerHTML = c.estado === 'Finalizada' || !plan
+            ? '<span class="text-muted" style="font-size:0.8rem;">No hay contactos pendientes por enviar.</span>'
+            : renderPlanHtml(plan, c.codigo, true);
 
         document.getElementById('dRitmo').innerHTML =
             `<div style="font-size:0.85rem;"><b>${c.lote}</b> contactos cada <b>${c.intervaloMin}</b> min <span class="text-muted">(± ${c.jitterMin} min)</span></div>` +
@@ -586,10 +601,12 @@
 
     async function cambiarEstado(estado) {
         if (estado === 'Activa') {
+            const k = detalle.contadores;
+            const plan = calcularPlan(k.pendientes + k.enviando, detalle.lote, detalle.intervaloMin, detalle.horaDesde, detalle.horaHasta);
             const ok = await Swal.fire({
-                title: '¿Activar la campaña?',
-                text: `Se enviarán ${detalle.lote} contactos cada ${detalle.intervaloMin} min (± ${detalle.jitterMin}), entre las ${detalle.horaDesde}:00 y las ${detalle.horaHasta}:00. El primer lote sale en los próximos minutos.`,
-                icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, activar', cancelButtonText: 'Cancelar'
+                title: detalle.estado === 'Borrador' ? '¿Ejecutar la campaña?' : '¿Reanudar la campaña?',
+                html: (plan ? renderPlanHtml(plan, detalle.codigo, true) : '') + '<div class="mt-3" style="font-size:0.85rem;">El primer lote sale en los próximos minutos.</div>',
+                icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, ejecutar', cancelButtonText: 'Cancelar'
             });
             if (!ok.isConfirmed) return;
         }
@@ -640,11 +657,9 @@
             document.getElementById('inpNombre').value = c.nombre;
             document.getElementById('inpCodigo').value = c.codigo;
             document.getElementById('inpPrefijo').value = c.prefijoId;
-            document.getElementById('inpPais').value = c.paisDefecto;
             ['inpCodigo', 'inpPrefijo'].forEach(id => document.getElementById(id).disabled = true);
-            document.getElementById('lnkHojaExistente').style.display = 'none';
-            document.getElementById('inpLibro').value = '';
-            document.getElementById('inpHoja').value = '';
+            document.getElementById('boxFuente').style.display = 'none';
+            document.getElementById('tituloContactos').innerText = 'AGREGAR MÁS CONTACTOS (OPCIONAL)';
             document.getElementById('inpLote').value = c.lote;
             document.getElementById('inpIntervalo').value = c.intervaloMin;
             document.getElementById('inpJitter').value = c.jitterMin;
@@ -661,13 +676,15 @@
             document.getElementById('dealPara').value = d.correoPara || '';
             document.getElementById('dealCc').value = d.correoCc || '';
             document.getElementById('avisoContactosEdicion').innerText = `Esta campaña ya tiene ${fmt(c.total)} contactos. Si subes otro CSV, solo se agregan los celulares que no existan todavía.`;
+            elegirFuente('csv');
         } else {
             document.getElementById('formTitle').innerText = 'Nueva campaña';
             llenarSelects('', '');
             ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
             ['inpCodigo', 'inpPrefijo'].forEach(id => document.getElementById(id).disabled = false);
-            document.getElementById('lnkHojaExistente').style.display = 'inline';
-            document.getElementById('inpPais').value = '51';
+            document.getElementById('boxFuente').style.display = 'inline-flex';
+            document.getElementById('tituloContactos').innerText = 'CONTACTOS';
+            elegirFuente('csv');
             document.getElementById('inpLote').value = 60;
             document.getElementById('inpIntervalo').value = 60;
             document.getElementById('inpJitter').value = 10;
@@ -679,6 +696,7 @@
             agregarRegla({ estado: 'No_por_el_momento', accion: 'registrar' });
         }
         toggleCorreo();
+        actualizarHintCodigo();
         estimar();
         bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#tab-datos"]')).show();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('formModal')).show();
@@ -704,24 +722,108 @@
         document.getElementById('boxCorreoCc').style.display = on ? 'block' : 'none';
     }
 
-    function estimar() {
-        const lote = Number(document.getElementById('inpLote').value) || 60;
-        const intervalo = Number(document.getElementById('inpIntervalo').value) || 60;
-        const desde = Number(document.getElementById('inpDesde').value);
-        const hasta = Number(document.getElementById('inpHasta').value);
-        const total = nuevos.validos.length || (editando ? (db.campanas.find(x => x.codigo === editando) || {}).total : 0) || 0;
-        const box = document.getElementById('estimacion');
-        if (!total) { box.innerHTML = '<span class="text-muted">Sube los contactos para ver cuánto tardará la campaña.</span>'; return; }
+    // ---------- vista previa del envío ----------
+    // Hora de Lima sin horario de verano: los getUTC* de este número son la hora local de Lima
+    function limaAhoraMs() { return Date.now() - 5 * 3600 * 1000; }
+    function horaDe(ms) { const d = new Date(ms); return d.getUTCHours() + d.getUTCMinutes() / 60; }
+    function inicioDia(ms) { return Math.floor(ms / 86400000) * 86400000; }
+    function fmtLima(ms) {
+        const d = new Date(ms);
+        const dias = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+        const dos = n => String(n).padStart(2, '0');
+        return `${dias[d.getUTCDay()]} ${dos(d.getUTCDate())}/${dos(d.getUTCMonth() + 1)} ${dos(d.getUTCHours())}:${dos(d.getUTCMinutes())}`;
+    }
+
+    function calcularPlan(total, lote, intervalo, desde, hasta) {
+        total = Number(total); lote = Number(lote); intervalo = Number(intervalo); desde = Number(desde); hasta = Number(hasta);
+        if (!(total > 0) || !(lote >= 1) || !(intervalo >= 5) || !(desde < hasta)) return null;
         const lotes = Math.ceil(total / lote);
-        const porDia = Math.max(1, Math.floor(((hasta - desde) * 60) / intervalo));
-        const dias = Math.ceil(lotes / porDia);
-        box.innerHTML = `Con <b>${fmt(total)}</b> contactos: <b>${fmt(lotes)}</b> lotes de ${lote} &middot; hasta <b>${porDia}</b> lotes por día &middot; <b>≈ ${dias} día${dias === 1 ? '' : 's'}</b>.`;
+        const porDia = Math.max(1, Math.ceil(((hasta - desde) * 60) / intervalo));
+
+        let t = limaAhoraMs();
+        if (horaDe(t) < desde) t = inicioDia(t) + desde * 3600000;
+        else if (horaDe(t) >= hasta) t = inicioDia(t) + 86400000 + desde * 3600000;
+        const inicio = t;
+        for (let i = 1; i < lotes && i < 100000; i++) {
+            t += intervalo * 60000;
+            const h = horaDe(t);
+            if (h >= hasta) t = inicioDia(t) + 86400000 + desde * 3600000;
+            else if (h < desde) t = inicioDia(t) + desde * 3600000;
+        }
+        const dias = Math.floor(t / 86400000) - Math.floor(inicio / 86400000) + 1;
+        return { total: total, lote: lote, lotes: lotes, porDia: porDia, contactosDia: Math.min(total, porDia * lote), ultimoLote: total - (lotes - 1) * lote, inicio: inicio, fin: t, dias: dias };
+    }
+
+    function renderPlanHtml(plan, codigo, compacto) {
+        const nombres = plan.lotes === 1 ? `${codigo}-1` : `${codigo}-1 … ${codigo}-${plan.lotes}`;
+        const pie = `Lotes: <b>${escapeHtml(nombres)}</b>. El último lleva ${fmt(plan.ultimoLote)} contactos. Es una estimación: n8n revisa cada 5 min y cada lote varía por los minutos aleatorios.`;
+        const fechas = `Empieza <b>${fmtLima(plan.inicio)}</b> y termina aprox. <b>${fmtLima(plan.fin)}</b> <span class="text-muted">(hora de Lima)</span>.`;
+        if (compacto) {
+            return `<div style="font-size:0.82rem; text-align:left;">
+                <div><b>${fmt(plan.total)}</b> contactos en <b>${fmt(plan.lotes)}</b> lotes de ${fmt(plan.lote)}</div>
+                <div>Hasta <b>${fmt(plan.contactosDia)}</b> por día (${fmt(plan.porDia)} lotes)</div>
+                <div>Duración: <b>≈ ${plan.dias} día${plan.dias === 1 ? '' : 's'}</b></div>
+                <div class="mt-1">${fechas}</div>
+                <div class="text-muted mt-1" style="font-size:0.72rem;">${pie}</div></div>`;
+        }
+        const caja = (n, l) => `<div class="col-6 col-md-3"><div class="stat-box"><div class="n">${n}</div><div class="l">${l}</div></div></div>`;
+        return `<div class="row g-2 mb-2">${caja(fmt(plan.total), 'Contactos')}${caja(fmt(plan.lotes), 'Lotes de ' + fmt(plan.lote))}${caja(fmt(plan.contactosDia), 'Máx. por día')}${caja('≈ ' + plan.dias + (plan.dias === 1 ? ' día' : ' días'), 'Duración')}</div>
+            <div>${fechas}</div><div class="text-muted mt-1" style="font-size:0.75rem;">${pie}</div>`;
+    }
+
+    function pendientesActuales() {
+        if (!editando) return 0;
+        const c = db.campanas.find(x => x.codigo === editando);
+        return c ? Math.max(0, c.total - c.enviados - c.errores) : 0;
+    }
+
+    function estimar() {
+        const total = nuevos.validos.length + pendientesActuales();
+        const box = document.getElementById('estimacion');
+        const plan = calcularPlan(total, document.getElementById('inpLote').value, document.getElementById('inpIntervalo').value,
+            document.getElementById('inpDesde').value, document.getElementById('inpHasta').value);
+        if (!total) { box.innerHTML = '<span class="text-muted">Carga los contactos en la pestaña 1 para ver cuánto tardará la campaña.</span>'; return; }
+        if (!plan) { box.innerHTML = '<span class="text-danger">Revisa el ritmo: el lote debe ser 1 o más, el intervalo 5 min o más y la hora "desde" menor que "hasta".</span>'; return; }
+        box.innerHTML = renderPlanHtml(plan, limpiarCodigo(document.getElementById('inpCodigo').value) || 'codigo', false);
+    }
+
+    function limpiarCodigo(texto) { return String(texto || '').trim().replace(/-+$/, ''); }
+    function actualizarHintCodigo() {
+        const cod = limpiarCodigo(document.getElementById('inpCodigo').value) || 'codigo';
+        document.getElementById('hintCodigo').innerHTML = `Los lotes se llamarán <b>${escapeHtml(cod)}-1</b>, <b>${escapeHtml(cod)}-2</b>... (el guion final es opcional)`;
+    }
+
+    // ---------- origen de contactos ----------
+    function elegirFuente(f) {
+        fuente = f;
+        resetCsv();
+        document.getElementById('btnFuenteCsv').className = 'btn btn-sm ' + (f === 'csv' ? 'btn-primary' : 'btn-outline-primary');
+        document.getElementById('btnFuenteSheet').className = 'btn btn-sm ' + (f === 'sheet' ? 'btn-primary' : 'btn-outline-primary');
+        document.getElementById('panelCsv').style.display = f === 'csv' ? 'block' : 'none';
+        document.getElementById('panelSheet').style.display = f === 'sheet' ? 'block' : 'none';
+        estimar();
+    }
+
+    async function leerSheet() {
+        const libro = document.getElementById('inpLibro').value.trim();
+        if (!libro) return Swal.fire('Falta el Sheet', 'Pega el enlace o el ID del Google Sheet.', 'warning');
+        showLoader(true, 'Leyendo el Sheet...');
+        try {
+            const res = await api('campInspeccionarHoja', { spreadsheetId: libro, nombreHoja: document.getElementById('inpHoja').value.trim() });
+            csv.encabezados = res.encabezados.map(h => String(h).trim());
+            csv.filas = res.filas;
+            document.getElementById('sheetEstado').innerText = `${fmt(csv.filas.length)} filas leídas. Revisa qué columna es cada dato.`;
+            armarMapeo();
+            document.getElementById('mapeoBox').style.display = 'block';
+            procesarContactos();
+        } catch (e) { errorSwal(e); }
+        showLoader(false);
     }
 
     // ---------- CSV ----------
     function resetCsv() {
         csv = { encabezados: [], filas: [] };
-        nuevos = { validos: [], invalidos: 0, duplicados: 0 };
+        nuevos = { validos: [], invalidos: 0, duplicados: 0, yaProcesados: 0 };
         document.getElementById('inpArchivo').value = '';
         document.getElementById('csvNombre').innerText = 'Haz clic para elegir tu archivo CSV';
         document.getElementById('mapeoBox').style.display = 'none';
@@ -790,28 +892,28 @@
         document.getElementById('mapTipo').innerHTML = opciones(adivinar(['tipolead', 'opcion', 'tipo']));
     }
 
-    function normalizarCelular(raw, pais) {
+    // El celular ya debe venir con código de país: solo se limpian símbolos y espacios
+    function normalizarCelular(raw) {
         let d = String(raw || '').replace(/\D/g, '');
         if (d.startsWith('00')) d = d.slice(2);
-        if (d.length === 9 && d[0] === '9' && pais === '51') d = '51' + d;
-        else if (d[0] === '0' && d.length >= 9 && d.length <= 11) d = pais + d.slice(1);
         return (d.length >= 10 && d.length <= 15) ? d : '';
     }
 
     function procesarContactos() {
-        const pais = (document.getElementById('inpPais').value || '51').replace(/\D/g, '') || '51';
         const idx = id => Number(document.getElementById(id).value);
         const iNom = idx('mapNombres'), iApe = idx('mapApellidos'), iCel = idx('mapCelular'), iDeal = idx('mapIddeal'), iTipo = idx('mapTipo');
+        const iEnvio = fuente === 'sheet' ? adivinar(['estadoenvio']) : -1;
         const celda = (f, i) => i >= 0 && f[i] !== undefined ? String(f[i]).trim() : '';
 
-        nuevos = { validos: [], invalidos: 0, duplicados: 0 };
-        if (iCel < 0) { renderResumenCsv(); return; }
+        nuevos = { validos: [], invalidos: 0, duplicados: 0, yaProcesados: 0 };
+        if (iCel < 0) { renderResumenCsv(); estimar(); return; }
         const vistos = new Set();
         csv.filas.forEach(f => {
-            const cel = normalizarCelular(celda(f, iCel), pais);
+            const cel = normalizarCelular(celda(f, iCel));
+            if (cel && vistos.has(cel)) { nuevos.duplicados++; return; }
+            if (cel) vistos.add(cel);
+            if (celda(f, iEnvio) !== '') { nuevos.yaProcesados++; return; }
             if (!cel) { nuevos.invalidos++; return; }
-            if (vistos.has(cel)) { nuevos.duplicados++; return; }
-            vistos.add(cel);
             nuevos.validos.push({ nombres: celda(f, iNom), apellidos: celda(f, iApe), celular: cel, iddeal: celda(f, iDeal), tipoLead: celda(f, iTipo) });
         });
         renderResumenCsv();
@@ -822,25 +924,32 @@
         document.getElementById('resumenCsv').innerHTML =
             `<span class="badge bg-success-subtle text-success border px-3 py-2">${fmt(nuevos.validos.length)} válidos</span>` +
             `<span class="badge ${nuevos.invalidos ? 'bg-danger-subtle text-danger' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.invalidos)} celulares inválidos (se omiten)</span>` +
-            `<span class="badge ${nuevos.duplicados ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.duplicados)} repetidos en el archivo (se omiten)</span>`;
+            `<span class="badge ${nuevos.duplicados ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.duplicados)} repetidos (se omiten)</span>` +
+            (nuevos.yaProcesados ? `<span class="badge bg-light text-muted border px-3 py-2">${fmt(nuevos.yaProcesados)} ya tienen Estado envío (no se reenvían)</span>` : '');
         document.getElementById('previewCsv').innerHTML = nuevos.validos.slice(0, 8).map(c =>
             `<tr><td>${escapeHtml(c.nombres)}</td><td>${escapeHtml(c.apellidos)}</td><td>${escapeHtml(c.celular)}</td><td>${escapeHtml(c.iddeal)}</td><td>${escapeHtml(c.tipoLead)}</td></tr>`).join('');
     }
 
     // ---------- guardar ----------
+    // nombres de las columnas elegidas (el servidor los busca en los encabezados del Sheet)
+    function leerMapeo() {
+        const nombre = id => { const i = Number(document.getElementById(id).value); return i >= 0 ? csv.encabezados[i] : ''; };
+        return { nombres: nombre('mapNombres'), apellidos: nombre('mapApellidos'), celular: nombre('mapCelular'), iddeal: nombre('mapIddeal'), tipoLead: nombre('mapTipo') };
+    }
+
     function leerFormulario() {
         const reglas = Array.from(document.querySelectorAll('#reglasContainer .dynamic-row')).map(r => ({
             estado: r.querySelector('.rg-estado').value.trim(), accion: r.querySelector('.rg-accion').value
         })).filter(r => r.estado);
         return {
-            codigo: document.getElementById('inpCodigo').value.trim(),
+            codigo: limpiarCodigo(document.getElementById('inpCodigo').value),
             prefijoId: document.getElementById('inpPrefijo').value.trim(),
             nombre: document.getElementById('inpNombre').value.trim(),
             marca: document.getElementById('inpMarca').value,
             botAlias: document.getElementById('inpBot').value,
-            paisDefecto: document.getElementById('inpPais').value.trim() || '51',
-            spreadsheetId: document.getElementById('inpLibro').value.trim(),
-            nombreHoja: document.getElementById('inpHoja').value.trim(),
+            spreadsheetId: fuente === 'sheet' ? document.getElementById('inpLibro').value.trim() : '',
+            nombreHoja: fuente === 'sheet' ? document.getElementById('inpHoja').value.trim() : '',
+            mapeo: fuente === 'sheet' ? leerMapeo() : null,
             lote: document.getElementById('inpLote').value,
             intervaloMin: document.getElementById('inpIntervalo').value,
             jitterMin: document.getElementById('inpJitter').value,
@@ -865,30 +974,44 @@
         if (!d.marca || !d.nombre || !d.codigo || !d.prefijoId || !d.botAlias) {
             return Swal.fire('Faltan datos', 'Completa marca, nombre, código, prefijo de ID y bot en la pestaña 1.', 'warning');
         }
+        if (!editando && fuente === 'sheet') {
+            if (!csv.encabezados.length) return Swal.fire('Falta leer el Sheet', 'Pega el enlace y pulsa «Leer» para elegir las columnas.', 'warning');
+            if (!d.mapeo.celular) return Swal.fire('Falta el celular', 'Elige qué columna del Sheet tiene el celular.', 'warning');
+        }
         if (!editando && nuevos.validos.length === 0) {
-            const seguir = await Swal.fire({ title: 'Sin contactos', text: 'No subiste ningún contacto todavía. ¿Crear la campaña vacía? Puedes agregarlos después.', icon: 'question', showCancelButton: true, confirmButtonText: 'Crear vacía', cancelButtonText: 'Volver' });
+            const seguir = await Swal.fire({ title: 'Sin contactos', text: 'No cargaste ningún contacto todavía. ¿Crear la campaña vacía? Puedes agregarlos después.', icon: 'question', showCancelButton: true, confirmButtonText: 'Crear vacía', cancelButtonText: 'Volver' });
             if (!seguir.isConfirmed) return;
         }
 
-        showLoader(true, editando ? 'Guardando cambios...' : 'Creando campaña y su Sheet...');
+        showLoader(true, editando ? 'Guardando cambios...' : (fuente === 'sheet' ? 'Preparando tu Sheet...' : 'Creando campaña y su Sheet...'));
         try {
             if (editando) await api('campActualizar', { codigo: d.codigo, data: d });
             else await api('campCrear', { data: d });
 
+            // con un Sheet existente los contactos ya están en él; con CSV se suben por tandas
             let agregados = 0, repetidos = 0;
             const trozo = 1000;
-            for (let i = 0; i < nuevos.validos.length; i += trozo) {
-                showLoader(true, `Subiendo contactos ${Math.min(i + trozo, nuevos.validos.length)} / ${nuevos.validos.length}...`);
-                const res = await api('campAgregarContactos', { codigo: d.codigo, contactos: nuevos.validos.slice(i, i + trozo) });
-                agregados += res.agregados;
-                repetidos += res.duplicados;
+            if (fuente === 'csv') {
+                for (let i = 0; i < nuevos.validos.length; i += trozo) {
+                    showLoader(true, `Subiendo contactos ${Math.min(i + trozo, nuevos.validos.length)} / ${nuevos.validos.length}...`);
+                    const res = await api('campAgregarContactos', { codigo: d.codigo, contactos: nuevos.validos.slice(i, i + trozo) });
+                    agregados += res.agregados;
+                    repetidos += res.duplicados;
+                }
             }
 
             bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
             showLoader(false);
-            const extra = nuevos.validos.length ? `<br><small>${fmt(agregados)} contactos agregados` + (repetidos ? `, ${fmt(repetidos)} ya existían.` : '.') + '</small>' : '';
-            await Swal.fire({ icon: 'success', title: '¡Guardado!', html: (editando ? 'Campaña actualizada.' : 'Campaña creada en estado Borrador. Revísala y actívala cuando quieras.') + extra });
+            let extra = '';
+            if (fuente === 'csv' && nuevos.validos.length) extra = `<br><small>${fmt(agregados)} contactos agregados` + (repetidos ? `, ${fmt(repetidos)} ya existían.` : '.') + '</small>';
+            if (fuente === 'sheet' && !editando) extra = `<br><small>${fmt(nuevos.validos.length)} contactos listos para enviar.</small>`;
+            await Swal.fire({
+                icon: 'success',
+                title: editando ? 'Cambios guardados' : 'Campaña guardada',
+                html: (editando ? 'Los cambios quedaron registrados.' : 'Quedó como <b>Borrador</b>: todavía no se envió nada. Revisa la vista previa y pulsa <b>Ejecutar campaña</b> cuando estés lista.') + extra
+            });
             await cargarLista();
+            await abrirDetalle(d.codigo);
         } catch (e) {
             showLoader(false);
             errorSwal(e);
