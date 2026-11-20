@@ -393,6 +393,11 @@
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Bot de Chatfuel</label>
                                     <select class="form-select glass-input" id="inpBot"></select>
                                 </div>
+                                <div class="col-12 col-md-8">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Atributo que dispara el mensaje (attributes)</label>
+                                    <input type="text" class="form-control glass-input" id="inpAtributo" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="ej. alejandro001">
+                                    <div class="text-muted mt-1" style="font-size:0.7rem;">Es el valor que se envía como <b>attributes</b> a Chatfuel para que salga la plantilla de esta campaña.</div>
+                                </div>
                             </div>
 
                             <hr class="my-4">
@@ -542,7 +547,7 @@
     const NEXUS_URL = 'index.html';   // página principal de Nexus
     const SESSION_KEY = 'nexus_session';
 
-    const MARCAS = ['Blackwell', 'Neumann', 'IEmpresa', 'ITAE', 'Eurocoach', 'MadisonOK'];
+    const MARCAS = ['Blackwell', 'Neumann', 'IEmpresa', 'ITAE', 'Eurocoach'];
     const ESTADOS = ['Borrador', 'Activa', 'Pausada', 'Finalizada'];
     const ACCIONES = [
         { id: 'registrar', label: 'Solo registrar en el Sheet' },
@@ -883,6 +888,7 @@
             document.getElementById('inpNombre').value = c.nombre;
             document.getElementById('inpCodigo').value = c.codigo;
             document.getElementById('inpPrefijo').value = c.prefijoId;
+            document.getElementById('inpAtributo').value = c.atributo || '';
             ['inpCodigo', 'inpPrefijo'].forEach(id => document.getElementById(id).disabled = true);
             document.getElementById('boxFuente').style.display = 'none';
             document.getElementById('tituloContactos').innerText = 'AGREGAR MÁS CONTACTOS (OPCIONAL)';
@@ -906,7 +912,7 @@
         } else {
             document.getElementById('formTitle').innerText = 'Nueva campaña';
             llenarSelects('', '');
-            ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
+            ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpAtributo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
             ['inpCodigo', 'inpPrefijo'].forEach(id => document.getElementById(id).disabled = false);
             document.getElementById('boxFuente').style.display = 'grid';
             document.getElementById('tituloContactos').innerText = 'CONTACTOS';
@@ -1188,6 +1194,7 @@
             nombre: document.getElementById('inpNombre').value.trim(),
             marca: document.getElementById('inpMarca').value,
             botAlias: document.getElementById('inpBot').value,
+            atributo: document.getElementById('inpAtributo').value.trim(),
             spreadsheetId: fuente === 'sheet' ? document.getElementById('inpLibro').value.trim() : '',
             nombreHoja: fuente === 'sheet' ? document.getElementById('inpHoja').value.trim() : '',
             mapeo: fuente === 'sheet' ? leerMapeo() : null,
@@ -1212,8 +1219,8 @@
 
     async function guardarCampana() {
         const d = leerFormulario();
-        if (!d.marca || !d.nombre || !d.codigo || !d.prefijoId || !d.botAlias) {
-            return Swal.fire('Faltan datos', 'Completa marca, nombre, código, prefijo de ID y bot en la pestaña 1.', 'warning');
+        if (!d.marca || !d.nombre || !d.codigo || !d.prefijoId || !d.botAlias || !d.atributo) {
+            return Swal.fire('Faltan datos', 'Completa marca, nombre, código, prefijo de ID, bot y atributo (attributes) en la pestaña 1.', 'warning');
         }
         if (!editando && fuente === 'sheet') {
             if (!csv.encabezados.length) return Swal.fire('Falta leer el Sheet', 'Pega el enlace y pulsa «Leer» para elegir las columnas.', 'warning');
