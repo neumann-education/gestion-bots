@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campañas | Nexus</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <style>
+    html { font-size: 14px; }
+    :root {
+        --bg-color: #F4F7FE;
+        --glass-bg: rgba(255, 255, 255, 0.65);
+        --text-main: #2B3674;
+        --text-muted: #8F9BBA;
+        --accent-blue: #4318FF;
+        --accent-green: #05CD99;
+        --accent-orange: #FFB547;
+        --border-color: #E2E8F0;
+    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; }
+
+    .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.8); border-radius: 20px; box-shadow: 0 18px 40px rgba(112, 144, 176, 0.08); }
+    .glass-modal { background: rgba(255, 255, 255, 0.98); border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.1); }
+    .kpi-icon-wrapper { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .icon-blue { background: rgba(67, 24, 255, 0.1); color: var(--accent-blue); }
+    .section-title { font-size: 0.7rem; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; }
+    .btn-primary-custom { background: var(--accent-blue); color: white; font-weight: 600; border-radius: 10px; padding: 10px 20px; border: none; transition: 0.3s; font-size: 0.9rem; }
+    .btn-primary-custom:hover { color: white; opacity: 0.92; }
+    .glass-input { background: #ffffff !important; border: 1px solid var(--border-color) !important; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; font-weight: 500; box-shadow: none !important; transition: 0.2s; }
+    .glass-input:focus { border-color: var(--accent-blue) !important; }
+    .view-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; background: #fff; margin-bottom: 10px; }
+    .brand-chip { background: #ffffff; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 600; font-size: 0.8rem; padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: 0.2s; }
+    .brand-chip:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .brand-chip.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+    .modal-adaptive { --bs-modal-width: min(1100px, 96vw); }
+    #loaderOverlay { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+    .custom-tabs-container { display: flex; width: fit-content; max-width: 100%; overflow-x: auto; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 4px; scrollbar-width: none; }
+    .custom-tabs-container::-webkit-scrollbar { display: none; }
+    .custom-tabs-container .nav-link { white-space: nowrap; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-radius: 8px; padding: 6px 16px; margin: 0 2px; transition: 0.2s; }
+    .custom-tabs-container .nav-link.active { background: #ffffff; color: var(--accent-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+
+    /* Tarjetas de campaña */
+    .camp-card { cursor: pointer; transition: all 0.3s; border-left: 4px solid var(--estado, #64748B); }
+    .camp-card:hover { transform: translateY(-5px); box-shadow: 0 25px 50px rgba(112, 144, 176, 0.15); background: white; }
+    .camp-card.e-Borrador { --estado: #64748B; }
+    .camp-card.e-Activa { --estado: #16A34A; }
+    .camp-card.e-Pausada { --estado: #D97706; }
+    .camp-card.e-Finalizada { --estado: #4318FF; }
+    .estado-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #eef2f7; color: var(--estado, #64748B); }
+    .estado-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .estado-pill.e-Borrador { --estado: #64748B; background: #eef2f7; }
+    .estado-pill.e-Activa { --estado: #059669; background: rgba(5,205,153,0.14); }
+    .estado-pill.e-Pausada { --estado: #B7791F; background: rgba(255,181,71,0.22); }
+    .estado-pill.e-Finalizada { --estado: #4318FF; background: rgba(67,24,255,0.1); }
+    .camp-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; line-height: 1.3; }
+    .progress { height: 8px; border-radius: 999px; background: #eef2f7; }
+    .progress-bar { background: var(--accent-green); }
+
+    .stat-box { border: 1px solid var(--border-color); border-radius: 12px; background: #fff; padding: 10px 14px; text-align: center; }
+    .stat-box .n { font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
+    .stat-box .l { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; }
+
+    .dynamic-row { display: flex; gap: 6px; align-items: center; background: #ffffff; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); }
+    .tabla-contactos { font-size: 0.78rem; }
+    .tabla-contactos th { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; }
+    .tabla-contactos td { white-space: nowrap; vertical-align: middle; }
+    .badge-envio { font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+    .envio-Pendiente { background: #eef2f7; color: #64748B; }
+    .envio-Enviando { background: rgba(255,181,71,0.22); color: #B7791F; }
+    .envio-Enviado { background: rgba(5,205,153,0.14); color: #059669; }
+    .envio-Error { background: rgba(229,62,62,0.12); color: #E53E3E; }
+    .csv-drop { border: 2px dashed #CBD5E1; border-radius: 10px; background: #f8fafc; padding: 22px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .csv-drop:hover { background: #f1f5f9; border-color: var(--accent-blue); }
+    </style>
+</head>
+<body>
+    <div id="loaderOverlay" style="display:none;">
+        <div class="spinner-border text-primary" role="status"></div>
+        <h5 class="mt-3 fw-bold text-primary" id="loaderTexto">Sincronizando campañas...</h5>
+    </div>
+
+    <nav class="navbar glass-panel d-flex justify-content-between align-items-center shadow-sm m-2 m-md-3 px-3 px-md-4 py-3">
+        <a class="navbar-brand fs-4 m-0 d-flex align-items-center" href="#">
+            <div class="kpi-icon-wrapper icon-blue me-3"><i class="fa-solid fa-bullhorn"></i></div>
+            <div><span class="fw-bold">Campañas</span><span class="fw-medium fs-6 d-block text-muted" style="line-height: 0.8;">Envíos masivos Chatfuel</span></div>
+        </a>
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <span class="text-end d-none d-sm-block">
+                <span class="fw-bold d-block" style="font-size:0.85rem; line-height:1;" id="navUserNombre">--</span>
+                <span class="badge bg-light text-primary border" style="font-size:0.65rem;" id="navUserRol">--</span>
+            </span>
+            <button class="btn btn-primary-custom" id="btnNueva" onclick="abrirFormulario()" style="display:none;"><i class="fa-solid fa-plus d-md-inline d-none me-2"></i> Nueva campaña</button>
+            <button class="btn btn-light border" title="Volver a Nexus" onclick="volverANexus()"><i class="fa-solid fa-house text-primary"></i><span class="d-none d-md-inline ms-2">Nexus</span></button>
+        </div>
+    </nav>
+
+    <main class="container-fluid px-3 px-md-5 pb-5 mt-4">
+        <div class="glass-panel p-3 mb-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
+            <input type="text" id="searchInput" class="form-control glass-input" style="max-width: 300px; width: 100%; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar campaña, código..." onkeyup="renderGrid()">
+            <span class="badge bg-light text-dark border px-3 py-2 fs-6 rounded-pill" id="totalCount">0 Campañas</span>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mb-2" id="marcaChips"></div>
+        <div class="d-flex flex-wrap gap-2 mb-4" id="estadoChips"></div>
+        <div class="row g-4" id="campGrid"></div>
+    </main>
+
+    <!-- ===================== DETALLE ===================== -->
+    <div class="modal fade" id="detalleModal" tabindex="-1">
+        <div class="modal-dialog modal-adaptive modal-fullscreen-md-down modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content glass-modal border-0 shadow-lg">
+                <div class="modal-header border-bottom-0 pb-0 pt-3 pt-md-4 px-3 px-md-4 d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                        <span id="dMarca" class="badge bg-light text-primary border mb-2"></span>
+                        <span id="dEstado" class="estado-pill ms-1"></span>
+                        <h3 class="fw-bold mb-1 text-dark" id="dNombre" style="font-size: clamp(1.2rem, 4vw, 1.75rem);">Campaña</h3>
+                        <div class="text-muted small d-flex flex-wrap gap-3 mt-1" style="font-size: 0.8rem;" id="dMeta"></div>
+                    </div>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3 p-md-4 pt-3">
+                    <div class="row g-2 mb-3" id="dStats"></div>
+                    <div class="progress mb-1"><div class="progress-bar" id="dProgreso" style="width:0%"></div></div>
+                    <div class="text-muted mb-3" style="font-size:0.75rem;" id="dProgresoTxt"></div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-4" id="dAcciones"></div>
+
+                    <div class="row g-4">
+                        <div class="col-12 col-lg-4">
+                            <div class="section-title">RITMO DE ENVÍO</div>
+                            <div class="view-card" id="dRitmo"></div>
+                            <div class="section-title mt-3">REGLAS POR ESTADO</div>
+                            <div class="view-card" id="dReglas"></div>
+                            <div class="section-title mt-3">RESPUESTAS RECIBIDAS</div>
+                            <div class="view-card" id="dPorEstado"></div>
+                        </div>
+                        <div class="col-12 col-lg-8">
+                            <div class="section-title">CONTACTOS</div>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <select class="form-select glass-input" style="max-width:180px;" id="fContactos" onchange="cambiarFiltroContactos()">
+                                    <option value="todos">Todos</option>
+                                    <option value="Pendiente">Pendientes</option>
+                                    <option value="Enviado">Enviados</option>
+                                    <option value="Error">Con error</option>
+                                    <option value="Respondieron">Respondieron</option>
+                                </select>
+                                <input type="text" class="form-control glass-input" style="max-width:240px;" id="bContactos" placeholder="Buscar nombre, celular, ID..." onkeyup="if(event.key==='Enter') cambiarFiltroContactos()">
+                                <button class="btn btn-light border btn-sm" onclick="cambiarFiltroContactos()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                            </div>
+                            <div class="table-responsive view-card p-0">
+                                <table class="table table-sm table-hover mb-0 tabla-contactos">
+                                    <thead><tr><th>ID</th><th>Nombre</th><th>Celular</th><th>Recupe</th><th>Envío</th><th>Respuesta</th><th>Fecha resp.</th><th>iddeal</th><th>Opción</th></tr></thead>
+                                    <tbody id="dTabla"></tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="text-muted" style="font-size:0.75rem;" id="dPagInfo"></span>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-light border" onclick="cambiarPagina(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <button class="btn btn-light border" onclick="cambiarPagina(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== FORMULARIO ===================== -->
+    <div class="modal fade" id="formModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-adaptive modal-fullscreen-md-down modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content glass-modal border-0 shadow-lg">
+                <div class="modal-header pb-2 border-bottom-0 pt-3 pt-md-4 px-3 px-md-4">
+                    <h4 class="fw-bold mb-0" id="formTitle">Nueva campaña</h4>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3 p-md-4 pt-3">
+                    <div class="custom-tabs-container mb-3 mb-md-4">
+                        <ul class="nav nav-pills flex-nowrap" style="margin:0;">
+                            <li class="nav-item"><button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-datos">1. Datos</button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-contactos">2. Contactos</button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-envio">3. Ritmo de envío</button></li>
+                            <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reglas">4. Respuestas</button></li>
+                        </ul>
+                    </div>
+
+                    <div class="tab-content">
+                        <!-- 1. DATOS -->
+                        <div class="tab-pane fade show active" id="tab-datos">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Marca</label>
+                                    <select class="form-select glass-input" id="inpMarca"></select>
+                                </div>
+                                <div class="col-12 col-md-8">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Nombre de la campaña</label>
+                                    <input type="text" class="form-control glass-input" id="inpNombre" placeholder="Ej. Alumnos Secundaria - Noviembre">
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Código (Recupe)</label>
+                                    <input type="text" class="form-control glass-input" id="inpCodigo" placeholder="secundaria1">
+                                    <div class="text-muted mt-1" style="font-size:0.7rem;">Cada lote se llamará <b>código-1</b>, <b>código-2</b>...</div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Prefijo de ID</label>
+                                    <input type="text" class="form-control glass-input" id="inpPrefijo" placeholder="asecundaria">
+                                    <div class="text-muted mt-1" style="font-size:0.7rem;">Los IDs serán <b>prefijo1</b>, <b>prefijo2</b>...</div>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Bot de Chatfuel</label>
+                                    <select class="form-select glass-input" id="inpBot"></select>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Código de país por defecto</label>
+                                    <input type="text" class="form-control glass-input" id="inpPais" value="51">
+                                </div>
+                                <div class="col-12">
+                                    <a class="text-decoration-none fw-bold" data-bs-toggle="collapse" href="#boxHojaExistente" id="lnkHojaExistente" style="font-size:0.8rem;"><i class="fa-solid fa-table me-1"></i> Usar un Google Sheet que ya existe (opcional)</a>
+                                    <div class="collapse mt-2" id="boxHojaExistente">
+                                        <div class="row g-2">
+                                            <div class="col-12 col-md-7"><input type="text" class="form-control glass-input" id="inpLibro" placeholder="Enlace o ID del Google Sheet"></div>
+                                            <div class="col-12 col-md-5"><input type="text" class="form-control glass-input" id="inpHoja" placeholder="Nombre de la pestaña (ej. Lista Alumnos Secundaria)"></div>
+                                        </div>
+                                        <div class="text-muted mt-1" style="font-size:0.7rem;">Se agregan las columnas que falten. Si lo dejas vacío, se crea un Sheet nuevo para la campaña.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. CONTACTOS -->
+                        <div class="tab-pane fade" id="tab-contactos">
+                            <div class="csv-drop" onclick="document.getElementById('inpArchivo').click()">
+                                <i class="fa-solid fa-file-csv fa-2x text-primary mb-2"></i>
+                                <div class="fw-bold" id="csvNombre">Haz clic para elegir tu archivo CSV</div>
+                                <div class="text-muted" style="font-size:0.75rem;">De 1 a 3000 registros. Acepta separador coma, punto y coma o tabulación.</div>
+                            </div>
+                            <input type="file" id="inpArchivo" accept=".csv,.txt" class="d-none" onchange="leerArchivo(this.files[0])">
+
+                            <div id="mapeoBox" class="mt-3" style="display:none;">
+                                <div class="section-title">¿QUÉ COLUMNA ES CADA DATO?</div>
+                                <div class="row g-2">
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Nombres</label><select class="form-select glass-input" id="mapNombres" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Apellidos</label><select class="form-select glass-input" id="mapApellidos" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Celular</label><select class="form-select glass-input" id="mapCelular" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">iddeal (opcional)</label><select class="form-select glass-input" id="mapIddeal" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead / opción (opcional)</label><select class="form-select glass-input" id="mapTipo" onchange="procesarContactos()"></select></div>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mt-3" id="resumenCsv"></div>
+                                <div class="table-responsive view-card p-0 mt-3">
+                                    <table class="table table-sm mb-0 tabla-contactos">
+                                        <thead><tr><th>Nombres</th><th>Apellidos</th><th>Celular</th><th>iddeal</th><th>Opción</th></tr></thead>
+                                        <tbody id="previewCsv"></tbody>
+                                    </table>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:0.7rem;">Vista previa de los primeros 8 contactos válidos.</div>
+                            </div>
+                            <div class="text-muted mt-3" style="font-size:0.8rem;" id="avisoContactosEdicion"></div>
+                        </div>
+
+                        <!-- 3. RITMO -->
+                        <div class="tab-pane fade" id="tab-envio">
+                            <div class="row g-3">
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Contactos por lote</label>
+                                    <input type="number" min="1" max="500" class="form-control glass-input" id="inpLote" value="60" oninput="estimar()">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Cada cuántos minutos</label>
+                                    <input type="number" min="5" class="form-control glass-input" id="inpIntervalo" value="60" oninput="estimar()">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Minutos aleatorios (±)</label>
+                                    <input type="number" min="0" class="form-control glass-input" id="inpJitter" value="10" oninput="estimar()">
+                                </div>
+                                <div class="col-3 col-md-1">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Desde (h)</label>
+                                    <input type="number" min="0" max="23" class="form-control glass-input" id="inpDesde" value="8" oninput="estimar()">
+                                </div>
+                                <div class="col-3 col-md-1">
+                                    <label class="form-label text-muted" style="font-size:0.7rem;">Hasta (h)</label>
+                                    <input type="number" min="1" max="24" class="form-control glass-input" id="inpHasta" value="20" oninput="estimar()">
+                                </div>
+                            </div>
+                            <div class="view-card mt-3" id="estimacion" style="font-size:0.85rem;"></div>
+                            <div class="text-muted" style="font-size:0.75rem;">
+                                El siguiente envío se programa a <b>intervalo ± minutos aleatorios</b> después del anterior (hora de Lima). Fuera de la ventana horaria no se envía.
+                                Puedes cambiar estos valores en cualquier momento, incluso con la campaña activa.
+                            </div>
+                        </div>
+
+                        <!-- 4. RESPUESTAS -->
+                        <div class="tab-pane fade" id="tab-reglas">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="section-title mb-0">¿QUÉ HACER SEGÚN LA RESPUESTA DEL USUARIO?</div>
+                                <button type="button" class="btn btn-sm btn-light border py-1" style="font-size:0.75rem;" onclick="agregarRegla()"><i class="fa-solid fa-plus text-primary me-1"></i> Añadir estado</button>
+                            </div>
+                            <div class="text-muted mb-2" style="font-size:0.75rem;">Escribe el valor exacto de <b>respuesta</b> que envía Chatfuel (ej. Respondió, No_por_el_momento, Administración). Un estado que no esté en la lista solo se registra en el Sheet.</div>
+                            <div id="reglasContainer" class="d-flex flex-column gap-2 mb-4"></div>
+
+                            <div id="boxDeal">
+                                <div class="section-title">DATOS DEL DEAL EN BITRIX (solo si algún estado crea o actualiza deal)</div>
+                                <div class="row g-3">
+                                    <div class="col-6 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Categoría / funnel (ID)</label><input type="text" class="form-control glass-input" id="dealCategoria" placeholder="127"></div>
+                                    <div class="col-6 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Etapa (STAGE_ID)</label><input type="text" class="form-control glass-input" id="dealEtapa" placeholder="C127:NEW"></div>
+                                    <div class="col-12 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Código MKT</label><input type="text" class="form-control glass-input" id="dealMkt" placeholder="MKT-ALUMNOSECUNDARIA-1"></div>
+                                    <div class="col-12 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Título del deal</label><input type="text" class="form-control glass-input" id="dealTitulo" placeholder="Lead ASecundaria"></div>
+                                    <div class="col-12 col-md-4"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead por defecto</label><input type="text" class="form-control glass-input" id="dealTipo" placeholder="(opcional)"></div>
+                                    <div class="col-12 col-md-8 d-flex align-items-end">
+                                        <label class="d-flex align-items-center gap-2" style="font-size:0.85rem; cursor:pointer;">
+                                            <input type="checkbox" id="dealNotificar" onchange="toggleCorreo()"> Avisar por correo a los asesores cuando se cree un deal
+                                        </label>
+                                    </div>
+                                    <div class="col-12 col-md-6" id="boxCorreoPara" style="display:none;"><label class="form-label text-muted" style="font-size:0.7rem;">Correo para (separados por coma)</label><input type="text" class="form-control glass-input" id="dealPara"></div>
+                                    <div class="col-12 col-md-6" id="boxCorreoCc" style="display:none;"><label class="form-label text-muted" style="font-size:0.7rem;">Con copia (CC)</label><input type="text" class="form-control glass-input" id="dealCc"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer px-3 px-md-4 pb-3 pb-md-4 pt-2 border-0 bg-transparent">
+                    <button type="button" class="btn text-muted fw-bold me-2" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn-primary-custom" onclick="guardarCampana()">Guardar campaña</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+    // Misma URL del Apps Script que usa Nexus
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwqGCUJN2vpqV_Ie7T66zWTPFGt1XPMoeOl0ERwCzKd7hbBPj1gOX-qeL4qrHs-g6LdfA/exec';
+    const NEXUS_URL = 'index.html';   // página principal de Nexus
+    const SESSION_KEY = 'nexus_session';
+
+    const MARCAS = ['Blackwell', 'Neumann', 'IEmpresa', 'ITAE', 'Eurocoach'];
+    const ESTADOS = ['Borrador', 'Activa', 'Pausada', 'Finalizada'];
+    const ACCIONES = [
+        { id: 'registrar', label: 'Solo registrar en el Sheet' },
+        { id: 'actualizar_deal', label: 'Actualizar el deal si ya tiene iddeal' },
+        { id: 'crear_o_actualizar', label: 'Crear deal (o actualizarlo si ya existe)' },
+        { id: 'crear_siempre', label: 'Crear deal siempre, aunque ya tenga' }
+    ];
+    const ACCION_CORTA = {
+        registrar: 'Solo registrar', actualizar_deal: 'Actualizar deal',
+        crear_o_actualizar: 'Crear / actualizar deal', crear_siempre: 'Crear siempre'
+    };
+
+    let currentUser = null;
+    let puedeEditar = false;
+    let db = { campanas: [], bots: [] };
+    let activeMarca = 'Todas';
+    let activeEstado = 'Todos';
+    let detalle = null;
+    let filtroC = { filtro: 'todos', busqueda: '', pagina: 1 };
+    let editando = null;      // código de la campaña que se edita (null = nueva)
+    let csv = { encabezados: [], filas: [] };
+    let nuevos = { validos: [], invalidos: 0, duplicados: 0 };
+
+    // ---------- utilidades ----------
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function fmt(n) { return Number(n || 0).toLocaleString('es-PE'); }
+    function showLoader(mostrar, texto) {
+        document.getElementById('loaderOverlay').style.display = mostrar ? 'flex' : 'none';
+        document.getElementById('loaderTexto').innerText = texto || 'Sincronizando campañas...';
+    }
+    function volverANexus() { location.href = NEXUS_URL; }
+
+    async function api(action, extra) {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(Object.assign({ action: action, usuario: currentUser.usuario, password: currentUser.password }, extra || {}))
+        });
+        const res = await response.json();
+        if (res.sesionInvalida) {
+            sessionStorage.removeItem(SESSION_KEY);
+            location.href = NEXUS_URL;
+            throw new Error('Sesión inválida');
+        }
+        if (res.status !== 'success') throw new Error(res.message || 'Error del servidor');
+        return res;
+    }
+
+    function errorSwal(e) { Swal.fire('No se pudo completar', e.message || String(e), 'error'); }
+
+    // ---------- inicio ----------
+    document.addEventListener('DOMContentLoaded', () => {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        if (!saved) { volverANexus(); return; }
+        try { currentUser = JSON.parse(saved); } catch (e) { volverANexus(); return; }
+        if (!currentUser || !currentUser.password) { volverANexus(); return; }
+        document.getElementById('navUserNombre').innerText = currentUser.nombre || currentUser.usuario;
+        document.getElementById('navUserRol').innerText = currentUser.rol;
+        cargarLista();
+    });
+
+    async function cargarLista() {
+        showLoader(true);
+        try {
+            const res = await api('campListar');
+            db.campanas = res.campanas;
+            db.bots = res.bots;
+            puedeEditar = res.puedeEditar;
+            document.getElementById('btnNueva').style.display = puedeEditar ? 'inline-block' : 'none';
+            renderChips();
+            renderGrid();
+        } catch (e) { errorSwal(e); }
+        showLoader(false);
+    }
+
+    // ---------- lista ----------
+    function renderChips() {
+        const marcas = ['Todas'].concat(Array.from(new Set(db.campanas.map(c => c.marca).filter(Boolean))).sort());
+        document.getElementById('marcaChips').innerHTML = marcas.map(m =>
+            `<button type="button" class="brand-chip ${m === activeMarca ? 'active' : ''}" onclick="selMarca(this.dataset.v)" data-v="${escapeHtml(m)}">${escapeHtml(m)}</button>`).join('');
+        document.getElementById('estadoChips').innerHTML = ['Todos'].concat(ESTADOS).map(e =>
+            `<button type="button" class="brand-chip ${e === activeEstado ? 'active' : ''}" onclick="selEstado(this.dataset.v)" data-v="${e}">${e}</button>`).join('');
+    }
+    function selMarca(m) { activeMarca = m; renderChips(); renderGrid(); }
+    function selEstado(e) { activeEstado = e; renderChips(); renderGrid(); }
+
+    function renderGrid() {
+        const term = document.getElementById('searchInput').value.toLowerCase();
+        let html = '';
+        let count = 0;
+        db.campanas.forEach(c => {
+            if (activeMarca !== 'Todas' && c.marca !== activeMarca) return;
+            if (activeEstado !== 'Todos' && c.estado !== activeEstado) return;
+            if (term && !(`${c.nombre} ${c.codigo} ${c.marca}`.toLowerCase().includes(term))) return;
+            count++;
+            const hechos = c.enviados + c.errores;
+            const pct = c.total ? Math.round((hechos / c.total) * 100) : 0;
+            html += `
+            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                <div class="glass-panel camp-card e-${c.estado} h-100 p-3 p-md-4" onclick="abrirDetalle(this.dataset.codigo)" data-codigo="${escapeHtml(c.codigo)}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-light text-primary border">${escapeHtml(c.marca || 'Sin marca')}</span>
+                        <span class="estado-pill e-${c.estado}"><span class="dot"></span>${c.estado}</span>
+                    </div>
+                    <h5 class="fw-bold mb-1 camp-title">${escapeHtml(c.nombre)}</h5>
+                    <div class="text-muted mb-3" style="font-size:0.75rem;"><i class="fa-solid fa-hashtag me-1"></i>${escapeHtml(c.codigo)} &middot; <i class="fa-brands fa-whatsapp me-1"></i>${escapeHtml(c.botAlias)}</div>
+                    <div class="progress mb-1"><div class="progress-bar" style="width:${pct}%"></div></div>
+                    <div class="d-flex justify-content-between text-muted mb-2" style="font-size:0.72rem;"><span>${fmt(hechos)} / ${fmt(c.total)} enviados</span><span>${pct}%</span></div>
+                    <div class="d-flex flex-wrap gap-3 small text-muted">
+                        <span title="Respuestas"><i class="fa-solid fa-reply me-1"></i>${fmt(c.respuestas)}</span>
+                        <span title="Errores" class="${c.errores ? 'text-danger' : ''}"><i class="fa-solid fa-triangle-exclamation me-1"></i>${fmt(c.errores)}</span>
+                        <span title="Lote"><i class="fa-solid fa-layer-group me-1"></i>${c.loteActual}</span>
+                    </div>
+                    ${c.estado === 'Activa' && c.proximoEnvio ? `<div class="text-muted mt-2" style="font-size:0.72rem;"><i class="fa-regular fa-clock me-1"></i>Próximo: ${escapeHtml(c.proximoEnvio)}</div>` : ''}
+                </div>
+            </div>`;
+        });
+        document.getElementById('campGrid').innerHTML = html || '<div class="text-muted p-4">No hay campañas para mostrar.</div>';
+        document.getElementById('totalCount').innerText = `${count} Campaña${count === 1 ? '' : 's'}`;
+    }
+
+    // ---------- detalle ----------
+    async function abrirDetalle(codigo) {
+        showLoader(true);
+        try {
+            const res = await api('campDetalle', { codigo: codigo });
+            detalle = res.campana;
+            detalle.contadores = res.contadores;
+            filtroC = { filtro: 'todos', busqueda: '', pagina: 1 };
+            document.getElementById('fContactos').value = 'todos';
+            document.getElementById('bContactos').value = '';
+            renderDetalle();
+            await cargarContactos();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('detalleModal')).show();
+        } catch (e) { errorSwal(e); }
+        showLoader(false);
+    }
+
+    function renderDetalle() {
+        const c = detalle;
+        const k = c.contadores;
+        document.getElementById('dMarca').innerText = c.marca;
+        document.getElementById('dEstado').className = `estado-pill e-${c.estado} ms-1`;
+        document.getElementById('dEstado').innerHTML = `<span class="dot"></span>${c.estado}`;
+        document.getElementById('dNombre').innerText = c.nombre;
+        document.getElementById('dMeta').innerHTML =
+            `<span><i class="fa-solid fa-hashtag me-1"></i>${escapeHtml(c.codigo)}</span>` +
+            `<span><i class="fa-brands fa-whatsapp me-1"></i>${escapeHtml(c.botAlias)}</span>` +
+            `<span><i class="fa-regular fa-calendar me-1"></i>Creada: ${escapeHtml(c.creada)}</span>` +
+            `<span><a href="${escapeHtml(c.urlHoja)}" target="_blank" class="text-decoration-none"><i class="fa-solid fa-table me-1"></i>Abrir Sheet</a></span>`;
+
+        const pendientes = k.pendientes + k.enviando;
+        const stats = [
+            ['Total', k.total, ''], ['Enviados', k.enviados, 'text-success'], ['Pendientes', pendientes, ''],
+            ['Con error', k.errores, k.errores ? 'text-danger' : ''], ['Respondieron', k.respuestas, 'text-primary']
+        ];
+        document.getElementById('dStats').innerHTML = stats.map(s =>
+            `<div class="col-6 col-md"><div class="stat-box"><div class="n ${s[2]}">${fmt(s[1])}</div><div class="l">${s[0]}</div></div></div>`).join('');
+
+        const hechos = k.enviados + k.errores;
+        const pct = k.total ? Math.round((hechos / k.total) * 100) : 0;
+        document.getElementById('dProgreso').style.width = pct + '%';
+        document.getElementById('dProgresoTxt').innerText = `${pct}% procesado`
+            + (k.enviando ? ` · ${k.enviando} enviándose ahora` : '')
+            + (c.estado === 'Activa' && c.proximoEnvio ? ` · próximo lote: ${c.proximoEnvio}` : '');
+
+        let btns = '';
+        if (puedeEditar) {
+            if (c.estado !== 'Activa') btns += `<button class="btn btn-success btn-sm fw-bold" onclick="cambiarEstado('Activa')"><i class="fa-solid fa-play me-1"></i>Activar</button>`;
+            if (c.estado === 'Activa') btns += `<button class="btn btn-warning btn-sm fw-bold" onclick="cambiarEstado('Pausada')"><i class="fa-solid fa-pause me-1"></i>Pausar</button>`;
+            if (c.estado === 'Activa') btns += `<button class="btn btn-light border btn-sm fw-bold" onclick="adelantar()"><i class="fa-solid fa-forward me-1"></i>Enviar el siguiente lote ya</button>`;
+            if (k.errores > 0 || k.enviando > 0) btns += `<button class="btn btn-light border btn-sm fw-bold" onclick="reintentar()"><i class="fa-solid fa-rotate-right me-1"></i>Reintentar errores</button>`;
+            btns += `<button class="btn btn-dark btn-sm fw-bold" onclick="editarActual()"><i class="fa-solid fa-pen-to-square me-1"></i>Editar / agregar contactos</button>`;
+        }
+        document.getElementById('dAcciones').innerHTML = btns;
+
+        document.getElementById('dRitmo').innerHTML =
+            `<div style="font-size:0.85rem;"><b>${c.lote}</b> contactos cada <b>${c.intervaloMin}</b> min <span class="text-muted">(± ${c.jitterMin} min)</span></div>` +
+            `<div class="text-muted" style="font-size:0.78rem;">Entre las ${c.horaDesde}:00 y las ${c.horaHasta}:00 (Lima)</div>` +
+            `<div class="text-muted" style="font-size:0.78rem;">Último lote: ${c.loteActual || 'ninguno'}</div>`;
+
+        document.getElementById('dReglas').innerHTML = c.reglas.length
+            ? c.reglas.map(r => `<div class="d-flex justify-content-between border-bottom py-1" style="font-size:0.8rem;"><b>${escapeHtml(r.estado)}</b><span class="text-muted">${ACCION_CORTA[r.accion] || r.accion}</span></div>`).join('')
+            : '<span class="text-muted" style="font-size:0.8rem;">Sin reglas: todo se registra solo en el Sheet.</span>';
+
+        const estados = Object.keys(k.porEstado);
+        document.getElementById('dPorEstado').innerHTML = estados.length
+            ? estados.map(e => `<div class="d-flex justify-content-between border-bottom py-1" style="font-size:0.8rem;"><span>${escapeHtml(e)}</span><b>${fmt(k.porEstado[e])}</b></div>`).join('')
+            : '<span class="text-muted" style="font-size:0.8rem;">Aún no hay respuestas.</span>';
+    }
+
+    async function recargarDetalle() {
+        const res = await api('campDetalle', { codigo: detalle.codigo });
+        detalle = res.campana;
+        detalle.contadores = res.contadores;
+        renderDetalle();
+        await cargarContactos();
+        cargarListaSilencioso();
+    }
+    async function cargarListaSilencioso() {
+        try {
+            const res = await api('campListar');
+            db.campanas = res.campanas;
+            renderChips();
+            renderGrid();
+        } catch (e) { /* no pasa nada, se verá al recargar */ }
+    }
+
+    async function cargarContactos() {
+        const res = await api('campContactos', { codigo: detalle.codigo, filtro: filtroC.filtro, busqueda: filtroC.busqueda, pagina: filtroC.pagina });
+        document.getElementById('dTabla').innerHTML = res.filas.map(f => `
+            <tr>
+                <td>${escapeHtml(f.id)}</td>
+                <td>${escapeHtml((f.nombres + ' ' + f.apellidos).trim())}</td>
+                <td>${escapeHtml(f.celular)}</td>
+                <td>${escapeHtml(f.recupe)}</td>
+                <td><span class="badge-envio envio-${f.estadoEnvio || 'Pendiente'}" ${f.error ? `title="${escapeHtml(f.error)}"` : ''}>${escapeHtml(f.estadoEnvio || '—')}</span></td>
+                <td>${escapeHtml(f.estado)}</td>
+                <td>${escapeHtml(f.fechaRespuesta)}</td>
+                <td>${escapeHtml(f.iddeal)}</td>
+                <td>${escapeHtml(f.tipoLead)}</td>
+            </tr>`).join('') || '<tr><td colspan="9" class="text-muted text-center py-3">Sin resultados</td></tr>';
+        const desde = res.totalFiltradas ? (res.pagina - 1) * res.porPagina + 1 : 0;
+        const hasta = Math.min(res.pagina * res.porPagina, res.totalFiltradas);
+        document.getElementById('dPagInfo').innerText = `${desde}-${hasta} de ${fmt(res.totalFiltradas)}`;
+        filtroC.maxPagina = Math.max(1, Math.ceil(res.totalFiltradas / res.porPagina));
+    }
+    function cambiarFiltroContactos() {
+        filtroC.filtro = document.getElementById('fContactos').value;
+        filtroC.busqueda = document.getElementById('bContactos').value.trim();
+        filtroC.pagina = 1;
+        cargarContactos().catch(errorSwal);
+    }
+    function cambiarPagina(delta) {
+        const nueva = filtroC.pagina + delta;
+        if (nueva < 1 || nueva > (filtroC.maxPagina || 1)) return;
+        filtroC.pagina = nueva;
+        cargarContactos().catch(errorSwal);
+    }
+
+    async function cambiarEstado(estado) {
+        if (estado === 'Activa') {
+            const ok = await Swal.fire({
+                title: '¿Activar la campaña?',
+                text: `Se enviarán ${detalle.lote} contactos cada ${detalle.intervaloMin} min (± ${detalle.jitterMin}), entre las ${detalle.horaDesde}:00 y las ${detalle.horaHasta}:00. El primer lote sale en los próximos minutos.`,
+                icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, activar', cancelButtonText: 'Cancelar'
+            });
+            if (!ok.isConfirmed) return;
+        }
+        showLoader(true);
+        try { await api('campCambiarEstado', { codigo: detalle.codigo, estado: estado }); await recargarDetalle(); }
+        catch (e) { errorSwal(e); }
+        showLoader(false);
+    }
+    async function adelantar() {
+        showLoader(true);
+        try {
+            await api('campAdelantar', { codigo: detalle.codigo });
+            Swal.fire({ icon: 'success', title: 'Listo', text: 'El siguiente lote saldrá en los próximos minutos (n8n revisa cada 5 min).', timer: 2600, showConfirmButton: false });
+            await recargarDetalle();
+        } catch (e) { errorSwal(e); }
+        showLoader(false);
+    }
+    async function reintentar() {
+        showLoader(true);
+        try {
+            const res = await api('campReintentar', { codigo: detalle.codigo });
+            Swal.fire({ icon: 'success', title: `${res.reintentar} contacto(s) vuelven a Pendiente`, text: detalle.estado === 'Finalizada' ? 'La campaña quedó pausada: actívala para enviarlos.' : '', timer: 2600, showConfirmButton: false });
+            await recargarDetalle();
+        } catch (e) { errorSwal(e); }
+        showLoader(false);
+    }
+    function editarActual() {
+        bootstrap.Modal.getInstance(document.getElementById('detalleModal')).hide();
+        setTimeout(() => abrirFormulario(detalle.codigo), 400);
+    }
+
+    // ---------- formulario ----------
+    function llenarSelects(marcaSel, botSel) {
+        document.getElementById('inpMarca').innerHTML = '<option value="">Seleccione...</option>' + MARCAS.map(m => `<option value="${m}" ${m === marcaSel ? 'selected' : ''}>${m}</option>`).join('');
+        document.getElementById('inpBot').innerHTML = '<option value="">Seleccione...</option>' + db.bots.map(b => `<option value="${escapeHtml(b.alias)}" ${b.alias === botSel ? 'selected' : ''}>${escapeHtml(b.nombre)}</option>`).join('');
+    }
+
+    function abrirFormulario(codigo) {
+        if (!puedeEditar) return Swal.fire('Sin permisos', 'Tu rol solo puede ver las campañas.', 'warning');
+        editando = codigo || null;
+        resetCsv();
+        document.getElementById('reglasContainer').innerHTML = '';
+
+        if (editando) {
+            const c = db.campanas.find(x => x.codigo === editando);
+            document.getElementById('formTitle').innerText = 'Editar campaña';
+            llenarSelects(c.marca, c.botAlias);
+            document.getElementById('inpNombre').value = c.nombre;
+            document.getElementById('inpCodigo').value = c.codigo;
+            document.getElementById('inpPrefijo').value = c.prefijoId;
+            document.getElementById('inpPais').value = c.paisDefecto;
+            ['inpCodigo', 'inpPrefijo'].forEach(id => document.getElementById(id).disabled = true);
+            document.getElementById('lnkHojaExistente').style.display = 'none';
+            document.getElementById('inpLibro').value = '';
+            document.getElementById('inpHoja').value = '';
+            document.getElementById('inpLote').value = c.lote;
+            document.getElementById('inpIntervalo').value = c.intervaloMin;
+            document.getElementById('inpJitter').value = c.jitterMin;
+            document.getElementById('inpDesde').value = c.horaDesde;
+            document.getElementById('inpHasta').value = c.horaHasta;
+            (c.reglas || []).forEach(r => agregarRegla(r));
+            const d = c.deal || {};
+            document.getElementById('dealCategoria').value = d.categoryId || '';
+            document.getElementById('dealEtapa').value = d.stageId || '';
+            document.getElementById('dealMkt').value = d.codigoMkt || '';
+            document.getElementById('dealTitulo').value = d.tituloPrefijo || '';
+            document.getElementById('dealTipo').value = d.tipoLead || '';
+            document.getElementById('dealNotificar').checked = !!d.notificarCorreo;
+            document.getElementById('dealPara').value = d.correoPara || '';
+            document.getElementById('dealCc').value = d.correoCc || '';
+            document.getElementById('avisoContactosEdicion').innerText = `Esta campaña ya tiene ${fmt(c.total)} contactos. Si subes otro CSV, solo se agregan los celulares que no existan todavía.`;
+        } else {
+            document.getElementById('formTitle').innerText = 'Nueva campaña';
+            llenarSelects('', '');
+            ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
+            ['inpCodigo', 'inpPrefijo'].forEach(id => document.getElementById(id).disabled = false);
+            document.getElementById('lnkHojaExistente').style.display = 'inline';
+            document.getElementById('inpPais').value = '51';
+            document.getElementById('inpLote').value = 60;
+            document.getElementById('inpIntervalo').value = 60;
+            document.getElementById('inpJitter').value = 10;
+            document.getElementById('inpDesde').value = 8;
+            document.getElementById('inpHasta').value = 20;
+            document.getElementById('dealNotificar').checked = false;
+            document.getElementById('avisoContactosEdicion').innerText = '';
+            agregarRegla({ estado: 'Respondió', accion: 'registrar' });
+            agregarRegla({ estado: 'No_por_el_momento', accion: 'registrar' });
+        }
+        toggleCorreo();
+        estimar();
+        bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#tab-datos"]')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('formModal')).show();
+    }
+
+    function agregarRegla(data) {
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <input type="text" class="form-control glass-input rg-estado" placeholder="Estado exacto (ej. Administración)" style="flex:1;">
+            <select class="form-select glass-input rg-accion" style="flex:1.4;">${ACCIONES.map(a => `<option value="${a.id}">${a.label}</option>`).join('')}</select>
+            <button type="button" class="btn btn-light text-danger border py-1 px-2" style="border-radius:6px;" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+        if (data && data.estado !== undefined) {
+            div.querySelector('.rg-estado').value = data.estado;
+            div.querySelector('.rg-accion').value = data.accion || 'registrar';
+        }
+        document.getElementById('reglasContainer').appendChild(div);
+    }
+
+    function toggleCorreo() {
+        const on = document.getElementById('dealNotificar').checked;
+        document.getElementById('boxCorreoPara').style.display = on ? 'block' : 'none';
+        document.getElementById('boxCorreoCc').style.display = on ? 'block' : 'none';
+    }
+
+    function estimar() {
+        const lote = Number(document.getElementById('inpLote').value) || 60;
+        const intervalo = Number(document.getElementById('inpIntervalo').value) || 60;
+        const desde = Number(document.getElementById('inpDesde').value);
+        const hasta = Number(document.getElementById('inpHasta').value);
+        const total = nuevos.validos.length || (editando ? (db.campanas.find(x => x.codigo === editando) || {}).total : 0) || 0;
+        const box = document.getElementById('estimacion');
+        if (!total) { box.innerHTML = '<span class="text-muted">Sube los contactos para ver cuánto tardará la campaña.</span>'; return; }
+        const lotes = Math.ceil(total / lote);
+        const porDia = Math.max(1, Math.floor(((hasta - desde) * 60) / intervalo));
+        const dias = Math.ceil(lotes / porDia);
+        box.innerHTML = `Con <b>${fmt(total)}</b> contactos: <b>${fmt(lotes)}</b> lotes de ${lote} &middot; hasta <b>${porDia}</b> lotes por día &middot; <b>≈ ${dias} día${dias === 1 ? '' : 's'}</b>.`;
+    }
+
+    // ---------- CSV ----------
+    function resetCsv() {
+        csv = { encabezados: [], filas: [] };
+        nuevos = { validos: [], invalidos: 0, duplicados: 0 };
+        document.getElementById('inpArchivo').value = '';
+        document.getElementById('csvNombre').innerText = 'Haz clic para elegir tu archivo CSV';
+        document.getElementById('mapeoBox').style.display = 'none';
+    }
+
+    function parseCSV(texto) {
+        texto = texto.replace(/^﻿/, '');
+        const primera = texto.split(/\r?\n/)[0] || '';
+        const delim = [';', '\t', ','].map(d => ({ d: d, n: primera.split(d).length })).sort((a, b) => b.n - a.n)[0].d;
+        const filas = [];
+        let fila = [], campo = '', comillas = false;
+        for (let i = 0; i < texto.length; i++) {
+            const ch = texto[i];
+            if (comillas) {
+                if (ch === '"' && texto[i + 1] === '"') { campo += '"'; i++; }
+                else if (ch === '"') comillas = false;
+                else campo += ch;
+            } else if (ch === '"') {
+                comillas = true;
+            } else if (ch === delim) {
+                fila.push(campo); campo = '';
+            } else if (ch === '\n' || ch === '\r') {
+                if (ch === '\r' && texto[i + 1] === '\n') i++;
+                fila.push(campo); campo = '';
+                if (fila.some(x => x.trim() !== '')) filas.push(fila);
+                fila = [];
+            } else {
+                campo += ch;
+            }
+        }
+        fila.push(campo);
+        if (fila.some(x => x.trim() !== '')) filas.push(fila);
+        return filas;
+    }
+
+    async function leerArchivo(archivo) {
+        if (!archivo) return;
+        const buffer = await archivo.arrayBuffer();
+        let texto;
+        try { texto = new TextDecoder('utf-8', { fatal: true }).decode(buffer); }
+        catch (e) { texto = new TextDecoder('windows-1252').decode(buffer); }
+        const filas = parseCSV(texto);
+        if (filas.length < 2) return Swal.fire('Archivo vacío', 'El CSV necesita una fila de encabezados y al menos un contacto.', 'warning');
+        csv.encabezados = filas[0].map(h => h.trim());
+        csv.filas = filas.slice(1);
+        document.getElementById('csvNombre').innerText = `${archivo.name} · ${fmt(csv.filas.length)} filas`;
+        armarMapeo();
+        document.getElementById('mapeoBox').style.display = 'block';
+        procesarContactos();
+    }
+
+    function adivinar(patrones) {
+        const limpio = csv.encabezados.map(h => h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ''));
+        return limpio.findIndex(h => patrones.some(p => h.includes(p)));
+    }
+
+    function armarMapeo() {
+        const opciones = (sel) => '<option value="-1">(ninguna)</option>' + csv.encabezados.map((h, i) => `<option value="${i}" ${i === sel ? 'selected' : ''}>${escapeHtml(h)}</option>`).join('');
+        let iApe = adivinar(['apellido']);
+        let iNom = adivinar(['nombres', 'nombre', 'name']);
+        if (iNom === iApe) iNom = -1;
+        document.getElementById('mapNombres').innerHTML = opciones(iNom);
+        document.getElementById('mapApellidos').innerHTML = opciones(iApe);
+        document.getElementById('mapCelular').innerHTML = opciones(adivinar(['celular', 'telefono', 'phone', 'whatsapp', 'movil', 'cel']));
+        document.getElementById('mapIddeal').innerHTML = opciones(adivinar(['iddeal', 'dealid']));
+        document.getElementById('mapTipo').innerHTML = opciones(adivinar(['tipolead', 'opcion', 'tipo']));
+    }
+
+    function normalizarCelular(raw, pais) {
+        let d = String(raw || '').replace(/\D/g, '');
+        if (d.startsWith('00')) d = d.slice(2);
+        if (d.length === 9 && d[0] === '9' && pais === '51') d = '51' + d;
+        else if (d[0] === '0' && d.length >= 9 && d.length <= 11) d = pais + d.slice(1);
+        return (d.length >= 10 && d.length <= 15) ? d : '';
+    }
+
+    function procesarContactos() {
+        const pais = (document.getElementById('inpPais').value || '51').replace(/\D/g, '') || '51';
+        const idx = id => Number(document.getElementById(id).value);
+        const iNom = idx('mapNombres'), iApe = idx('mapApellidos'), iCel = idx('mapCelular'), iDeal = idx('mapIddeal'), iTipo = idx('mapTipo');
+        const celda = (f, i) => i >= 0 && f[i] !== undefined ? String(f[i]).trim() : '';
+
+        nuevos = { validos: [], invalidos: 0, duplicados: 0 };
+        if (iCel < 0) { renderResumenCsv(); return; }
+        const vistos = new Set();
+        csv.filas.forEach(f => {
+            const cel = normalizarCelular(celda(f, iCel), pais);
+            if (!cel) { nuevos.invalidos++; return; }
+            if (vistos.has(cel)) { nuevos.duplicados++; return; }
+            vistos.add(cel);
+            nuevos.validos.push({ nombres: celda(f, iNom), apellidos: celda(f, iApe), celular: cel, iddeal: celda(f, iDeal), tipoLead: celda(f, iTipo) });
+        });
+        renderResumenCsv();
+        estimar();
+    }
+
+    function renderResumenCsv() {
+        document.getElementById('resumenCsv').innerHTML =
+            `<span class="badge bg-success-subtle text-success border px-3 py-2">${fmt(nuevos.validos.length)} válidos</span>` +
+            `<span class="badge ${nuevos.invalidos ? 'bg-danger-subtle text-danger' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.invalidos)} celulares inválidos (se omiten)</span>` +
+            `<span class="badge ${nuevos.duplicados ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.duplicados)} repetidos en el archivo (se omiten)</span>`;
+        document.getElementById('previewCsv').innerHTML = nuevos.validos.slice(0, 8).map(c =>
+            `<tr><td>${escapeHtml(c.nombres)}</td><td>${escapeHtml(c.apellidos)}</td><td>${escapeHtml(c.celular)}</td><td>${escapeHtml(c.iddeal)}</td><td>${escapeHtml(c.tipoLead)}</td></tr>`).join('');
+    }
+
+    // ---------- guardar ----------
+    function leerFormulario() {
+        const reglas = Array.from(document.querySelectorAll('#reglasContainer .dynamic-row')).map(r => ({
+            estado: r.querySelector('.rg-estado').value.trim(), accion: r.querySelector('.rg-accion').value
+        })).filter(r => r.estado);
+        return {
+            codigo: document.getElementById('inpCodigo').value.trim(),
+            prefijoId: document.getElementById('inpPrefijo').value.trim(),
+            nombre: document.getElementById('inpNombre').value.trim(),
+            marca: document.getElementById('inpMarca').value,
+            botAlias: document.getElementById('inpBot').value,
+            paisDefecto: document.getElementById('inpPais').value.trim() || '51',
+            spreadsheetId: document.getElementById('inpLibro').value.trim(),
+            nombreHoja: document.getElementById('inpHoja').value.trim(),
+            lote: document.getElementById('inpLote').value,
+            intervaloMin: document.getElementById('inpIntervalo').value,
+            jitterMin: document.getElementById('inpJitter').value,
+            horaDesde: document.getElementById('inpDesde').value,
+            horaHasta: document.getElementById('inpHasta').value,
+            reglas: reglas,
+            deal: {
+                categoryId: document.getElementById('dealCategoria').value.trim(),
+                stageId: document.getElementById('dealEtapa').value.trim(),
+                codigoMkt: document.getElementById('dealMkt').value.trim(),
+                tituloPrefijo: document.getElementById('dealTitulo').value.trim(),
+                tipoLead: document.getElementById('dealTipo').value.trim(),
+                notificarCorreo: document.getElementById('dealNotificar').checked,
+                correoPara: document.getElementById('dealPara').value.trim(),
+                correoCc: document.getElementById('dealCc').value.trim()
+            }
+        };
+    }
+
+    async function guardarCampana() {
+        const d = leerFormulario();
+        if (!d.marca || !d.nombre || !d.codigo || !d.prefijoId || !d.botAlias) {
+            return Swal.fire('Faltan datos', 'Completa marca, nombre, código, prefijo de ID y bot en la pestaña 1.', 'warning');
+        }
+        if (!editando && nuevos.validos.length === 0) {
+            const seguir = await Swal.fire({ title: 'Sin contactos', text: 'No subiste ningún contacto todavía. ¿Crear la campaña vacía? Puedes agregarlos después.', icon: 'question', showCancelButton: true, confirmButtonText: 'Crear vacía', cancelButtonText: 'Volver' });
+            if (!seguir.isConfirmed) return;
+        }
+
+        showLoader(true, editando ? 'Guardando cambios...' : 'Creando campaña y su Sheet...');
+        try {
+            if (editando) await api('campActualizar', { codigo: d.codigo, data: d });
+            else await api('campCrear', { data: d });
+
+            let agregados = 0, repetidos = 0;
+            const trozo = 1000;
+            for (let i = 0; i < nuevos.validos.length; i += trozo) {
+                showLoader(true, `Subiendo contactos ${Math.min(i + trozo, nuevos.validos.length)} / ${nuevos.validos.length}...`);
+                const res = await api('campAgregarContactos', { codigo: d.codigo, contactos: nuevos.validos.slice(i, i + trozo) });
+                agregados += res.agregados;
+                repetidos += res.duplicados;
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('formModal')).hide();
+            showLoader(false);
+            const extra = nuevos.validos.length ? `<br><small>${fmt(agregados)} contactos agregados` + (repetidos ? `, ${fmt(repetidos)} ya existían.` : '.') + '</small>' : '';
+            await Swal.fire({ icon: 'success', title: '¡Guardado!', html: (editando ? 'Campaña actualizada.' : 'Campaña creada en estado Borrador. Revísala y actívala cuando quieras.') + extra });
+            await cargarLista();
+        } catch (e) {
+            showLoader(false);
+            errorSwal(e);
+            // si la campaña se creó pero falló la subida, se puede reintentar desde Editar
+            if (!editando) cargarListaSilencioso();
+        }
+        showLoader(false);
+    }
+    </script>
+</body>
+</html>
