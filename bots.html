@@ -21,6 +21,8 @@
     .glass-input { background: #fff !important; border: 1px solid var(--border-color) !important; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; font-weight: 500; box-shadow: none !important; }
     .glass-input:focus { border-color: var(--accent-blue) !important; }
     .section-title { font-size: 0.7rem; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 0.4rem; }
+    /* se oculta el token sin usar type="password", para que Chrome no ofrezca guardar contraseñas */
+    .token-oculto { -webkit-text-security: disc; text-security: disc; }
     .bot-card { transition: all 0.3s; }
     .bot-card:hover { transform: translateY(-4px); background: white; box-shadow: 0 25px 50px rgba(112,144,176,0.15); }
     .mono { font-family: ui-monospace, Consolas, monospace; font-size: 0.78rem; word-break: break-all; }
@@ -51,7 +53,7 @@
 
     <main class="container-fluid px-3 px-md-5 pb-5 mt-4">
         <div class="glass-panel p-3 mb-4 d-flex flex-wrap gap-3 align-items-center justify-content-between">
-            <input type="text" id="searchInput" class="form-control glass-input" style="max-width: 300px; width: 100%; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar bot..." onkeyup="renderGrid()">
+            <input type="text" id="searchInput" class="form-control glass-input" autocomplete="off" data-lpignore="true" data-1p-ignore style="max-width: 300px; width: 100%; padding: 10px 15px; font-size: 0.95rem;" placeholder="Buscar bot..." onkeyup="renderGrid()">
             <span class="badge bg-light text-dark border px-3 py-2 fs-6 rounded-pill" id="totalCount">0 Bots</span>
         </div>
         <div class="row g-4" id="botGrid"></div>
@@ -67,20 +69,20 @@
                 <div class="modal-body px-4 pb-4">
                     <div class="mb-3">
                         <div class="section-title">Alias (único)</div>
-                        <input type="text" id="fAlias" class="form-control glass-input" placeholder="ej. neumann">
+                        <input type="text" id="fAlias" class="form-control glass-input" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="ej. neumann">
                         <div class="text-muted mt-1" style="font-size:0.72rem;" id="fAliasAyuda">Es el nombre interno con el que las campañas se conectan al bot. Después no se puede cambiar.</div>
                     </div>
                     <div class="mb-3">
                         <div class="section-title">Nombre visible</div>
-                        <input type="text" id="fNombre" class="form-control glass-input" placeholder="ej. Neumann - WhatsApp principal">
+                        <input type="text" id="fNombre" class="form-control glass-input" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="ej. Neumann - WhatsApp principal">
                     </div>
                     <div class="mb-3">
                         <div class="section-title">Bot ID de Chatfuel</div>
-                        <input type="text" id="fBotId" class="form-control glass-input" placeholder="ej. 661379e7...">
+                        <input type="text" id="fBotId" class="form-control glass-input" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="ej. 661379e7...">
                     </div>
                     <div class="mb-4">
                         <div class="section-title">Token de Chatfuel</div>
-                        <input type="password" id="fToken" class="form-control glass-input" autocomplete="off" placeholder="chatfuel_token">
+                        <input type="text" id="fToken" class="form-control glass-input token-oculto" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore placeholder="chatfuel_token">
                         <div class="text-muted mt-1" style="font-size:0.72rem;" id="fTokenAyuda"></div>
                     </div>
                     <div class="d-flex justify-content-end gap-2">
