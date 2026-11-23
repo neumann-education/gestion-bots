@@ -245,6 +245,10 @@
     .nx-form-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
     @media (max-width: 575.98px) { .nx-form-footer .btn-primary-custom { flex: 1 1 100%; order: -1; padding: 12px; } .nx-form-footer .btn-ghost-text, .nx-form-footer .btn-soft { flex: 1 1 auto; } }
     .tabla-preview td, .tabla-preview th { white-space: nowrap; }
+    .nx-uf { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: #94A3B8; margin-left: 4px; }
+    .nx-html { font-family: ui-monospace, Consolas, monospace; font-size: 0.74rem; line-height: 1.45; white-space: pre; overflow: auto; resize: vertical; }
+    .nx-token { border: 1px solid var(--border-color); background: #fff; color: var(--accent-blue); border-radius: 8px; padding: 3px 9px; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; transition: .2s; }
+    .nx-token:hover { background: #f3f1ff; border-color: var(--accent-blue); }
     </style>
 </head>
 <body>
@@ -492,16 +496,44 @@
                                 <div class="row g-3">
                                     <div class="col-6 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Categoría / funnel (ID)</label><input type="text" class="form-control glass-input" id="dealCategoria" placeholder="127"></div>
                                     <div class="col-6 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Etapa (STAGE_ID)</label><input type="text" class="form-control glass-input" id="dealEtapa" placeholder="C127:NEW"></div>
-                                    <div class="col-12 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Código MKT</label><input type="text" class="form-control glass-input" id="dealMkt" placeholder="MKT-ALUMNOSECUNDARIA-1"></div>
                                     <div class="col-12 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Título del deal</label><input type="text" class="form-control glass-input" id="dealTitulo" placeholder="Lead ASecundaria"></div>
-                                    <div class="col-12 col-md-4"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead por defecto</label><input type="text" class="form-control glass-input" id="dealTipo" placeholder="(opcional)"></div>
-                                    <div class="col-12 col-md-8 d-flex align-items-end">
-                                        <label class="d-flex align-items-center gap-2" style="font-size:0.85rem; cursor:pointer;">
-                                            <input type="checkbox" id="dealNotificar" onchange="toggleCorreo()"> Avisar por correo a los asesores cuando se cree un deal
-                                        </label>
+                                    <div class="col-12 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead por defecto</label><input type="text" class="form-control glass-input" id="dealTipo" placeholder="(opcional)"></div>
+                                </div>
+
+                                <div class="section-title mt-4">CAMPOS RMKT QUE SE LLENAN EN EL DEAL</div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">RMKT_Nombre <span class="nx-uf">UF_CRM_1786469165</span></label><input type="text" class="form-control glass-input" id="dealMkt" autocomplete="off" placeholder="RMKT-IEMPRESA-NOCONTACTO-01"></div>
+                                    <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">RMKT_Origen <span class="nx-uf">UF_CRM_1784908238</span></label><input type="text" class="form-control glass-input" id="dealOrigen" autocomplete="off" placeholder="Chatfuel"></div>
+                                    <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">RMKT_detalles <span class="nx-uf">UF_CRM_1786469258</span></label><input type="text" class="form-control glass-input" id="dealDetalles" autocomplete="off" placeholder="(opcional)"></div>
+                                    <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">RMKT_Interes <span class="nx-uf">UF_CRM_1788387764</span></label><input type="text" class="form-control glass-input" id="dealInteres" autocomplete="off" placeholder="(opcional)"></div>
+                                </div>
+                                <div class="text-muted mt-2" style="font-size:0.74rem;"><b>RMKT_Respuesta</b> <span class="nx-uf">UF_CRM_1784908390</span> se llena sola con la respuesta del usuario. Los campos opcionales vacíos no se tocan en Bitrix.</div>
+
+                                <div class="section-title mt-4">CORREO AL ASESOR</div>
+                                <label class="d-flex align-items-center gap-2 mb-3" style="font-size:0.85rem; cursor:pointer;">
+                                    <input type="checkbox" id="dealNotificar" onchange="toggleCorreo()"> Avisar por correo a los asesores cuando se cree un deal
+                                </label>
+                                <div id="boxCorreoDetalle" style="display:none;">
+                                    <div class="nx-aviso mb-3"><i class="fa-solid fa-envelope mt-1"></i><div>El correo sale desde la cuenta de Gmail de la <b>marca</b> de la campaña (se asigna en n8n, un nodo Gmail por marca). Aquí editas a quién va y cómo se ve.</div></div>
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">Correo para (separados por coma)</label><input type="text" class="form-control glass-input" id="dealPara" autocomplete="off"></div>
+                                        <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">Con copia (CC)</label><input type="text" class="form-control glass-input" id="dealCc" autocomplete="off"></div>
+                                        <div class="col-12"><label class="form-label text-muted" style="font-size:0.7rem;">Asunto</label><input type="text" class="form-control glass-input" id="correoAsunto" autocomplete="off"></div>
+                                        <div class="col-12">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                                                <label class="form-label text-muted mb-0" style="font-size:0.7rem;">Contenido del correo (HTML)</label>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn-soft sm" onclick="previewCorreo()"><i class="fa-regular fa-eye"></i> Vista previa</button>
+                                                    <button type="button" class="btn-soft sm" onclick="restaurarCorreo()"><i class="fa-solid fa-rotate-left"></i> Plantilla por defecto</button>
+                                                </div>
+                                            </div>
+                                            <textarea class="form-control glass-input nx-html" id="correoHtml" rows="10" spellcheck="false" autocomplete="off"></textarea>
+                                            <div class="mt-2" style="font-size:0.72rem;">
+                                                <span class="text-muted">Pulsa un dato para insertarlo donde está el cursor (asunto o contenido):</span>
+                                                <div class="d-flex flex-wrap gap-1 mt-1" id="tokensCorreo"></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-12 col-md-6" id="boxCorreoPara" style="display:none;"><label class="form-label text-muted" style="font-size:0.7rem;">Correo para (separados por coma)</label><input type="text" class="form-control glass-input" id="dealPara"></div>
-                                    <div class="col-12 col-md-6" id="boxCorreoCc" style="display:none;"><label class="form-label text-muted" style="font-size:0.7rem;">Con copia (CC)</label><input type="text" class="form-control glass-input" id="dealCc"></div>
                                 </div>
                             </div>
                         </div>
@@ -547,6 +579,9 @@
     const NEXUS_URL = 'index.html';   // página principal de Nexus
     const SESSION_KEY = 'nexus_session';
 
+    const CORREO_DEFAULT = {"asunto": "🟣 Lead {{campana}}: {{nombre}}, quiere más información", "html": "<div style=\"font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f6; padding: 20px 10px; margin: 0;\">\n  <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);\">\n    <div style=\"background-color: #143293; padding: 25px 20px; text-align: center; color: #ffffff; font-size: 20px; font-weight: bold;\">{{marca}}</div>\n    <div style=\"padding: 35px 30px;\">\n      <div style=\"text-align: center; margin-bottom: 12px;\">\n        <span style=\"background-color: #dcfce7; color: #15803d; font-size: 12px; font-weight: bold; padding: 6px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #86efac;\">⚡ Respuesta recibida</span>\n      </div>\n      <h2 style=\"color: #143293; margin: 0 0 10px 0; font-size: 22px; text-align: center;\">¡Prospecto solicita información! 👨‍💼</h2>\n      <p style=\"color: #555555; font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 25px;\">\n        El usuario respondió a la campaña <strong>{{campana}}</strong> y se creó su negociación en Bitrix24.\n      </p>\n      <div style=\"border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; background-color: #ffffff;\">\n        <h3 style=\"margin: 0 0 15px 0; color: #143293; font-size: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;\">📋 Datos del Prospecto</h3>\n        <table style=\"width: 100%; border-collapse: collapse; font-size: 14px;\">\n          <tr><td style=\"padding: 10px 0; color: #64748b; width: 35%;\">Nombre:</td><td style=\"padding: 10px 0; color: #0f172a; font-weight: 600;\">{{nombre}} {{apellido}}</td></tr>\n          <tr><td style=\"padding: 10px 0; color: #64748b;\">WhatsApp / Celular:</td><td style=\"padding: 10px 0; color: #0f172a; font-weight: 600;\">{{celular}}</td></tr>\n          <tr><td style=\"padding: 10px 0; color: #64748b;\">Respuesta:</td><td style=\"padding: 10px 0; color: #15803d; font-weight: 700;\">⭐ {{respuesta}}</td></tr>\n        </table>\n      </div>\n      <div style=\"text-align: center; margin-top: 30px;\">\n        <a href=\"{{link_chatfuel}}\" target=\"_blank\" style=\"background-color: #0084ff; color: #ffffff; text-decoration: none; padding: 13px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; display: block; margin-bottom: 12px;\">💬 Abrir Conversación en Chatfuel</a>\n        <a href=\"{{link_bitrix}}\" target=\"_blank\" style=\"background-color: #ffffff; color: #143293; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; display: block; border: 2px solid #143293;\">📊 Ver Negociación en Bitrix24</a>\n      </div>\n    </div>\n    <div style=\"background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;\">\n      <p style=\"margin: 0; font-size: 12px; color: #64748b;\">Notificación automática de campañas · <strong>{{marca}}</strong></p>\n    </div>\n  </div>\n</div>"};
+    const TOKENS_CORREO = ['marca', 'campana', 'nombre', 'apellido', 'celular', 'respuesta', 'link_chatfuel', 'link_bitrix', 'iddeal', 'tipo_lead', 'rmkt_nombre', 'rmkt_detalles', 'rmkt_interes'];
+    let campoCorreoActivo = 'correoHtml';
     const MARCAS = ['Blackwell', 'Neumann', 'IEmpresa', 'ITAE', 'Eurocoach'];
     const ESTADOS = ['Borrador', 'Activa', 'Pausada', 'Finalizada'];
     const ACCIONES = [
@@ -606,6 +641,7 @@
 
     // ---------- inicio ----------
     document.addEventListener('DOMContentLoaded', () => {
+        renderTokens();
         const saved = sessionStorage.getItem(SESSION_KEY);
         if (!saved) { volverANexus(); return; }
         try { currentUser = JSON.parse(saved); } catch (e) { volverANexus(); return; }
@@ -778,6 +814,14 @@
             : '<span class="text-muted" style="font-size:0.8rem;">Aún no hay respuestas.</span>';
     }
 
+    function textoRmkt(d) {
+        const e = escapeHtml;
+        let t = `<b>RMKT_Origen</b> «${e(d.origenMkt || 'Chatfuel')}», <b>RMKT_Respuesta</b> (lo que respondió el usuario), <b>RMKT_Nombre</b> «${e(d.codigoMkt || '—')}»`;
+        if (d.detallesMkt) t += `, <b>RMKT_detalles</b> «${e(d.detallesMkt)}»`;
+        if (d.interesMkt) t += `, <b>RMKT_Interes</b> «${e(d.interesMkt)}»`;
+        return t;
+    }
+
     // Explica en palabras qué hará la campaña con cada respuesta (Sheet y Bitrix24)
     function narrativaRespuestas(c) {
         const e = escapeHtml;
@@ -804,16 +848,20 @@
             h += '<div class="nx-aviso mb-2" style="background:#F3F1FF;border-color:#D9D2FF;color:#3311DB;"><i class="fa-solid fa-circle-plus mt-1"></i><div>' +
                 '<b>Deal nuevo:</b> se busca el contacto por su celular (si no existe se crea con su nombre y apellido) y se crea el deal en el ' +
                 `<b>funnel ${e(d.categoryId || '—')}</b>, etapa <b>${e(d.stageId || '—')}</b>, con el título <b>«${e(d.tituloPrefijo || 'Lead ' + c.nombre)} - nombre»</b>. ` +
-                `Se llenan: comentario con la campaña y el link del chat de Chatfuel, URL del chat, la respuesta, el código MKT <b>${e(d.codigoMkt || '—')}</b>, origen <b>Chatfuel</b> y TipoLead` +
-                (d.tipoLead ? ` (si el contacto no trae uno, se usa <b>${e(d.tipoLead)}</b>)` : '') +
+                `Se llenan: comentario con la campaña y el link del chat de Chatfuel, URL del chat, TipoLead` +
+                (d.tipoLead ? ` (si el contacto no trae uno, se usa <b>${e(d.tipoLead)}</b>)` : '') + ' y los campos RMKT: ' + textoRmkt(d) +
                 '. Luego se guarda el iddeal en el Sheet y se devuelve IDDeal y URL_Bitrix a Chatfuel.' +
-                (d.notificarCorreo ? ` Se avisa por correo a <b>${e(d.correoPara || '—')}</b>${d.correoCc ? ' (CC ' + e(d.correoCc) + ')' : ''}.` : ' No se envía correo.') +
                 '</div></div>';
         }
         if (actualizaDeal) {
             h += '<div class="nx-aviso mb-1" style="background:#F3F1FF;border-color:#D9D2FF;color:#3311DB;"><i class="fa-solid fa-pen mt-1"></i><div>' +
-                `<b>Deal existente:</b> solo se escriben el origen (<b>Chatfuel</b>), el link del chat, la respuesta y el código MKT <b>${e(d.codigoMkt || '—')}</b>. ` +
+                `<b>Deal existente:</b> solo se escriben el link del chat y los campos RMKT: ${textoRmkt(d)}. ` +
                 'No se cambia la etapa ni el funnel.</div></div>';
+        }
+        if (d.notificarCorreo) {
+            h += '<div class="nx-aviso mt-2" style="background:#F3F1FF;border-color:#D9D2FF;color:#3311DB;"><i class="fa-solid fa-envelope mt-1"></i><div>' +
+                `<b>Correo:</b> cuando se crea un deal se avisa a <b>${e(d.correoPara || '—')}</b>${d.correoCc ? ' (CC ' + e(d.correoCc) + ')' : ''}, ` +
+                `desde la cuenta de Gmail de <b>${e(c.marca)}</b>, con el asunto <b>«${e(d.correoAsunto || 'por defecto')}»</b>.</div></div>`;
         }
         return h + '</div>';
     }
@@ -940,6 +988,11 @@
             document.getElementById('dealCategoria').value = d.categoryId || '';
             document.getElementById('dealEtapa').value = d.stageId || '';
             document.getElementById('dealMkt').value = d.codigoMkt || '';
+            document.getElementById('dealOrigen').value = d.origenMkt || 'Chatfuel';
+            document.getElementById('dealDetalles').value = d.detallesMkt || '';
+            document.getElementById('dealInteres').value = d.interesMkt || '';
+            document.getElementById('correoAsunto').value = d.correoAsunto || CORREO_DEFAULT.asunto;
+            document.getElementById('correoHtml').value = d.correoHtml || CORREO_DEFAULT.html;
             document.getElementById('dealTitulo').value = d.tituloPrefijo || '';
             document.getElementById('dealTipo').value = d.tipoLead || '';
             document.getElementById('dealNotificar').checked = !!d.notificarCorreo;
@@ -950,7 +1003,10 @@
         } else {
             document.getElementById('formTitle').innerText = 'Nueva campaña';
             llenarSelects('', '');
-            ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpAtributo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
+            ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpAtributo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealDetalles', 'dealInteres', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('dealOrigen').value = 'Chatfuel';
+            document.getElementById('correoAsunto').value = CORREO_DEFAULT.asunto;
+            document.getElementById('correoHtml').value = CORREO_DEFAULT.html;
             ['inpCodigo', 'inpPrefijo'].forEach(id => document.getElementById(id).disabled = false);
             document.getElementById('boxFuente').style.display = 'grid';
             document.getElementById('tituloContactos').innerText = 'CONTACTOS';
@@ -1003,8 +1059,50 @@
 
     function toggleCorreo() {
         const on = document.getElementById('dealNotificar').checked;
-        document.getElementById('boxCorreoPara').style.display = on ? 'block' : 'none';
-        document.getElementById('boxCorreoCc').style.display = on ? 'block' : 'none';
+        document.getElementById('boxCorreoDetalle').style.display = on ? 'block' : 'none';
+    }
+
+    // ---------- correo: datos que se pueden insertar, vista previa y plantilla ----------
+    function renderTokens() {
+        document.getElementById('tokensCorreo').innerHTML = TOKENS_CORREO.map(t => `<button type="button" class="nx-token" onclick="insertarToken('${t}')">{{${t}}}</button>`).join('');
+        ['correoAsunto', 'correoHtml'].forEach(id => document.getElementById(id).addEventListener('focus', () => { campoCorreoActivo = id; }));
+    }
+    function insertarToken(token) {
+        const campo = document.getElementById(campoCorreoActivo);
+        const texto = '{{' + token + '}}';
+        const ini = campo.selectionStart === undefined ? campo.value.length : campo.selectionStart;
+        const fin = campo.selectionEnd === undefined ? ini : campo.selectionEnd;
+        campo.value = campo.value.slice(0, ini) + texto + campo.value.slice(fin);
+        campo.focus();
+        campo.selectionStart = campo.selectionEnd = ini + texto.length;
+    }
+    function restaurarCorreo() {
+        Swal.fire({ title: '¿Volver a la plantilla por defecto?', text: 'Se reemplazan el asunto y el contenido que tienes ahora.', icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, restaurar', cancelButtonText: 'Cancelar' })
+            .then(r => {
+                if (!r.isConfirmed) return;
+                document.getElementById('correoAsunto').value = CORREO_DEFAULT.asunto;
+                document.getElementById('correoHtml').value = CORREO_DEFAULT.html;
+            });
+    }
+    function llenarCorreo(texto, escapar) {
+        const datos = {
+            marca: document.getElementById('inpMarca').value || 'Marca', campana: document.getElementById('inpNombre').value || 'Mi campaña',
+            nombre: 'María', apellido: 'Quispe', celular: '51987654321', respuesta: 'Respondió',
+            link_chatfuel: '#', link_bitrix: '#', iddeal: '12345', tipo_lead: 'Interesado',
+            rmkt_nombre: document.getElementById('dealMkt').value, rmkt_detalles: document.getElementById('dealDetalles').value, rmkt_interes: document.getElementById('dealInteres').value
+        };
+        return texto.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (k in datos ? (escapar ? escapeHtml(datos[k]) : String(datos[k])) : m));
+    }
+    function previewCorreo() {
+        const asunto = llenarCorreo(document.getElementById('correoAsunto').value, false);
+        const html = llenarCorreo(document.getElementById('correoHtml').value, true);
+        Swal.fire({
+            title: 'Vista previa del correo', width: 760, confirmButtonText: 'Cerrar',
+            html: `<div class="text-start mb-2" style="font-size:0.85rem;"><span class="text-muted">Asunto:</span> <b>${escapeHtml(asunto)}</b></div>` +
+                  '<iframe id="iframeCorreo" sandbox="" style="width:100%; height:58vh; border:1px solid #E2E8F0; border-radius:12px; background:#fff;"></iframe>' +
+                  '<div class="text-muted mt-2" style="font-size:0.72rem;">Datos de ejemplo. Los enlaces reales se arman al enviarse.</div>',
+            didOpen: () => { document.getElementById('iframeCorreo').srcdoc = html; }
+        });
     }
 
     // ---------- vista previa del envío ----------
@@ -1246,6 +1344,11 @@
                 categoryId: document.getElementById('dealCategoria').value.trim(),
                 stageId: document.getElementById('dealEtapa').value.trim(),
                 codigoMkt: document.getElementById('dealMkt').value.trim(),
+                origenMkt: document.getElementById('dealOrigen').value.trim(),
+                detallesMkt: document.getElementById('dealDetalles').value.trim(),
+                interesMkt: document.getElementById('dealInteres').value.trim(),
+                correoAsunto: document.getElementById('correoAsunto').value.trim(),
+                correoHtml: document.getElementById('correoHtml').value.trim(),
                 tituloPrefijo: document.getElementById('dealTitulo').value.trim(),
                 tipoLead: document.getElementById('dealTipo').value.trim(),
                 notificarCorreo: document.getElementById('dealNotificar').checked,
