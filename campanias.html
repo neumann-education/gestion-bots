@@ -312,7 +312,7 @@
                             <div class="view-card" id="dRitmo"></div>
                             <div class="section-title mt-3">VISTA PREVIA DEL ENVÍO</div>
                             <div class="view-card" id="dPlan"></div>
-                            <div class="section-title mt-3">REGLAS POR ESTADO</div>
+                            <div class="section-title mt-3">QUÉ PASA CUANDO RESPONDEN</div>
                             <div class="view-card" id="dReglas"></div>
                             <div class="section-title mt-3">RESPUESTAS RECIBIDAS</div>
                             <div class="view-card" id="dPorEstado"></div>
@@ -770,14 +770,52 @@
             `<div class="text-muted" style="font-size:0.78rem;">Entre las ${c.horaDesde}:00 y las ${c.horaHasta}:00 (Lima)</div>` +
             `<div class="text-muted" style="font-size:0.78rem;">Último lote: ${c.loteActual || 'ninguno'}</div>`;
 
-        document.getElementById('dReglas').innerHTML = c.reglas.length
-            ? c.reglas.map(r => `<div class="d-flex justify-content-between border-bottom py-1" style="font-size:0.8rem;"><b>${escapeHtml(r.estado)}</b><span class="text-muted">${ACCION_CORTA[r.accion] || r.accion}</span></div>`).join('')
-            : '<span class="text-muted" style="font-size:0.8rem;">Sin reglas: todo se registra solo en el Sheet.</span>';
+        document.getElementById('dReglas').innerHTML = narrativaRespuestas(c);
 
         const estados = Object.keys(k.porEstado);
         document.getElementById('dPorEstado').innerHTML = estados.length
             ? estados.map(e => `<div class="d-flex justify-content-between border-bottom py-1" style="font-size:0.8rem;"><span>${escapeHtml(e)}</span><b>${fmt(k.porEstado[e])}</b></div>`).join('')
             : '<span class="text-muted" style="font-size:0.8rem;">Aún no hay respuestas.</span>';
+    }
+
+    // Explica en palabras qué hará la campaña con cada respuesta (Sheet y Bitrix24)
+    function narrativaRespuestas(c) {
+        const e = escapeHtml;
+        const d = c.deal || {};
+        const reglas = c.reglas || [];
+        const frases = {
+            registrar: 'solo se anota en el Sheet. No toca Bitrix.',
+            actualizar_deal: 'si el contacto ya tiene <b>iddeal</b>, se <b>actualiza ese deal</b>; si no tiene, solo se anota en el Sheet.',
+            crear_o_actualizar: 'si ya tiene <b>iddeal</b>, se <b>actualiza ese deal</b>; si no, se <b>crea un deal nuevo</b>.',
+            crear_siempre: 'se <b>crea un deal nuevo</b>, aunque ya tenga uno.'
+        };
+        const creaDeal = reglas.some(r => r.accion === 'crear_o_actualizar' || r.accion === 'crear_siempre');
+        const actualizaDeal = reglas.some(r => r.accion === 'actualizar_deal' || r.accion === 'crear_o_actualizar');
+
+        let h = '<div style="font-size:0.8rem; line-height:1.55;">';
+        h += '<p class="mb-2">Cuando alguien responde a la plantilla, la respuesta se anota en el Sheet (columnas <b>Estado</b> y <b>Fecha Respuesta</b>) y después:</p>';
+        if (reglas.length) {
+            h += '<ul class="ps-3 mb-2">' + reglas.map(r => `<li class="mb-1">Si responde <b>«${e(r.estado)}»</b>: ${frases[r.accion] || e(r.accion)}</li>`).join('') + '</ul>';
+            h += '<p class="mb-2">Cualquier otra respuesta solo se anota en el Sheet.</p>';
+        } else {
+            h += '<p class="mb-2"><b>No hay reglas</b>: todas las respuestas solo se anotan en el Sheet y no se toca Bitrix.</p>';
+        }
+        if (creaDeal) {
+            h += '<div class="nx-aviso mb-2" style="background:#F3F1FF;border-color:#D9D2FF;color:#3311DB;"><i class="fa-solid fa-circle-plus mt-1"></i><div>' +
+                '<b>Deal nuevo:</b> se busca el contacto por su celular (si no existe se crea con su nombre y apellido) y se crea el deal en el ' +
+                `<b>funnel ${e(d.categoryId || '—')}</b>, etapa <b>${e(d.stageId || '—')}</b>, con el título <b>«${e(d.tituloPrefijo || 'Lead ' + c.nombre)} - nombre»</b>. ` +
+                `Se llenan: comentario con la campaña y el link del chat de Chatfuel, URL del chat, la respuesta, el código MKT <b>${e(d.codigoMkt || '—')}</b>, origen <b>Chatfuel</b> y TipoLead` +
+                (d.tipoLead ? ` (si el contacto no trae uno, se usa <b>${e(d.tipoLead)}</b>)` : '') +
+                '. Luego se guarda el iddeal en el Sheet y se devuelve IDDeal y URL_Bitrix a Chatfuel.' +
+                (d.notificarCorreo ? ` Se avisa por correo a <b>${e(d.correoPara || '—')}</b>${d.correoCc ? ' (CC ' + e(d.correoCc) + ')' : ''}.` : ' No se envía correo.') +
+                '</div></div>';
+        }
+        if (actualizaDeal) {
+            h += '<div class="nx-aviso mb-1" style="background:#F3F1FF;border-color:#D9D2FF;color:#3311DB;"><i class="fa-solid fa-pen mt-1"></i><div>' +
+                `<b>Deal existente:</b> solo se escriben el origen (<b>Chatfuel</b>), el link del chat, la respuesta y el código MKT <b>${e(d.codigoMkt || '—')}</b>. ` +
+                'No se cambia la etapa ni el funnel.</div></div>';
+        }
+        return h + '</div>';
     }
 
     async function recargarDetalle() {
