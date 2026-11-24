@@ -262,6 +262,7 @@
     .resp-chip b { background: rgba(5,205,153,0.14); color: #059669; border-radius: 999px; padding: 1px 10px; }
     .nx-info { color: #94A3B8; font-size: 0.72rem; margin-left: 3px; cursor: help; outline: none; }
     .nx-info:hover, .nx-info:focus { color: #4F46E5; }
+    .nx-uf-val { font-family: ui-monospace, Consolas, monospace; color: #4F46E5; }
     .nx-uf { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: #94A3B8; margin-left: 4px; }
     .nx-html { font-family: ui-monospace, Consolas, monospace; font-size: 0.74rem; line-height: 1.45; white-space: pre; overflow: auto; resize: vertical; }
     .nx-token { border: 1px solid var(--border-color); background: #fff; color: var(--accent-blue); border-radius: 8px; padding: 3px 9px; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; transition: .2s; }
@@ -792,6 +793,9 @@
             `<span><i class="fa-solid fa-hashtag me-1"></i>${escapeHtml(c.codigo)}</span>` +
             `<span><i class="fa-brands fa-whatsapp me-1"></i>${escapeHtml(c.botAlias)}</span>` +
             `<span><i class="fa-regular fa-calendar me-1"></i>Creada: ${escapeHtml(c.creada)}</span>` +
+            (c.atributo
+                ? `<span title="Variable que se envía a Chatfuel para disparar la plantilla"><i class="fa-solid fa-tag me-1"></i>attributes = <b class="nx-uf-val">${escapeHtml(c.atributo)}</b></span>`
+                : `<span class="text-danger" title="Sin valor, Chatfuel no disparará la plantilla"><i class="fa-solid fa-triangle-exclamation me-1"></i>attributes sin valor (edita la campaña)</span>`) +
             `<span><a href="${escapeHtml(c.urlHoja)}" target="_blank" class="text-decoration-none"><i class="fa-solid fa-table me-1"></i>Abrir Sheet</a></span>`;
 
         const pendientes = k.pendientes + k.enviando;
