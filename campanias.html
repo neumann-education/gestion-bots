@@ -260,6 +260,8 @@
     .acc-crear { background: rgba(67,24,255,0.10); color: #4318FF; }
     .resp-chip { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-color); border-radius: 999px; padding: 5px 6px 5px 14px; font-size: 0.8rem; font-weight: 600; }
     .resp-chip b { background: rgba(5,205,153,0.14); color: #059669; border-radius: 999px; padding: 1px 10px; }
+    .nx-info { color: #94A3B8; font-size: 0.72rem; margin-left: 3px; cursor: help; outline: none; }
+    .nx-info:hover, .nx-info:focus { color: #4F46E5; }
     .nx-uf { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: #94A3B8; margin-left: 4px; }
     .nx-html { font-family: ui-monospace, Consolas, monospace; font-size: 0.74rem; line-height: 1.45; white-space: pre; overflow: auto; resize: vertical; }
     .nx-token { border: 1px solid var(--border-color); background: #fff; color: var(--accent-blue); border-radius: 8px; padding: 3px 9px; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; transition: .2s; }
@@ -460,8 +462,8 @@
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Nombres</label><select class="form-select glass-input" id="mapNombres" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Apellidos</label><select class="form-select glass-input" id="mapApellidos" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Celular (con código de país)</label><select class="form-select glass-input" id="mapCelular" onchange="procesarContactos()"></select></div>
-                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">iddeal (opcional)</label><select class="form-select glass-input" id="mapIddeal" onchange="procesarContactos()"></select></div>
-                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead / opción (opcional)</label><select class="form-select glass-input" id="mapTipo" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">iddeal (opcional) <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si tu archivo trae el <b>iddeal</b> de Bitrix, elige esa columna. El contacto subirá a Chatfuel con ese IDDeal y, al responder, se <b>actualiza esa negociación</b>.<br>Si no lo trae, deja «(ninguna)»: al responder se <b>crea una negociación nueva</b>."></i></label><select class="form-select glass-input" id="mapIddeal" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead / opción (opcional) <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si tu archivo trae un tipo o programa por contacto (por ejemplo la carrera), elige esa columna y se enviará a Chatfuel y a Bitrix como TipoLead.<br>Si no, deja «(ninguna)» y se usa el «TipoLead por defecto» de la pestaña Respuestas."></i></label><select class="form-select glass-input" id="mapTipo" onchange="procesarContactos()"></select></div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 mt-3" id="resumenCsv"></div>
                                 <div class="table-responsive view-card p-0 mt-3">
@@ -1061,7 +1063,7 @@
             document.getElementById('dealNotificar').checked = !!d.notificarCorreo;
             document.getElementById('dealPara').value = d.correoPara || '';
             document.getElementById('dealCc').value = d.correoCc || '';
-            document.getElementById('avisoContactosEdicion').innerText = `Esta campaña ya tiene ${fmt(c.total)} contactos. Si subes otro CSV, solo se agregan los celulares que no existan todavía.`;
+            document.getElementById('avisoContactosEdicion').innerHTML = `Esta campaña ya tiene <b>${fmt(c.total)}</b> contactos. Si subes otro CSV, se <b>suman</b> los celulares nuevos; los que ya estén no se repiten. ` + (c.urlHoja ? `<a href="${escapeHtml(c.urlHoja)}" target="_blank" rel="noopener" class="text-decoration-none"><i class="fa-solid fa-table me-1"></i>Abrir el Sheet de esta campaña</a>` : '');
             elegirFuente('csv');
         } else {
             document.getElementById('formTitle').innerText = 'Nueva campaña';
@@ -1080,7 +1082,7 @@
             document.getElementById('inpDesde').value = 8;
             document.getElementById('inpHasta').value = 20;
             document.getElementById('dealNotificar').checked = false;
-            document.getElementById('avisoContactosEdicion').innerText = '';
+            document.getElementById('avisoContactosEdicion').innerHTML = '';
             agregarRegla({ estado: 'Respondió', accion: 'registrar' });
             agregarRegla({ estado: 'No_por_el_momento', accion: 'registrar' });
         }
@@ -1474,5 +1476,6 @@
         showLoader(false);
     }
     </script>
+<script>document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el, { container: 'body' }); });</script>
 </body>
 </html>
