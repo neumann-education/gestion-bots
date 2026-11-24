@@ -245,6 +245,21 @@
     .nx-form-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; }
     @media (max-width: 575.98px) { .nx-form-footer .btn-primary-custom { flex: 1 1 100%; order: -1; padding: 12px; } .nx-form-footer .btn-ghost-text, .nx-form-footer .btn-soft { flex: 1 1 auto; } }
     .tabla-preview td, .tabla-preview th { white-space: nowrap; }
+    .info-card { border: 1px solid var(--border-color); border-radius: 16px; background: #fff; padding: 14px 16px; }
+    .info-title { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .info-title i { color: var(--accent-blue); }
+    .info-big { font-size: 1rem; font-weight: 800; line-height: 1.3; }
+    .info-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .info-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 0.8rem; padding: 4px 0; }
+    .info-row + .info-row { border-top: 1px dashed var(--border-color); }
+    .info-row .k { color: var(--text-muted); flex-shrink: 0; }
+    .info-row .v { font-weight: 700; text-align: right; word-break: break-word; }
+    .acc-badge { display: inline-flex; align-items: center; font-size: 0.68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+    .acc-registrar { background: #eef2f7; color: #64748B; }
+    .acc-actualizar { background: rgba(14,165,233,0.14); color: #0369A1; }
+    .acc-crear { background: rgba(67,24,255,0.10); color: #4318FF; }
+    .resp-chip { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-color); border-radius: 999px; padding: 5px 6px 5px 14px; font-size: 0.8rem; font-weight: 600; }
+    .resp-chip b { background: rgba(5,205,153,0.14); color: #059669; border-radius: 999px; padding: 1px 10px; }
     .nx-uf { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: #94A3B8; margin-left: 4px; }
     .nx-html { font-family: ui-monospace, Consolas, monospace; font-size: 0.74rem; line-height: 1.45; white-space: pre; overflow: auto; resize: vertical; }
     .nx-token { border: 1px solid var(--border-color); background: #fff; color: var(--accent-blue); border-radius: 8px; padding: 3px 9px; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; transition: .2s; }
@@ -310,43 +325,53 @@
                     <div id="dAviso"></div>
                     <div class="nx-acciones mb-4" id="dAcciones"></div>
 
-                    <div class="row g-4">
-                        <div class="col-12 col-lg-4">
-                            <div class="section-title">RITMO DE ENVÍO</div>
-                            <div class="view-card" id="dRitmo"></div>
-                            <div class="section-title mt-3">VISTA PREVIA DEL ENVÍO</div>
-                            <div class="view-card" id="dPlan"></div>
-                            <div class="section-title mt-3">QUÉ PASA CUANDO RESPONDEN</div>
-                            <div class="view-card" id="dReglas"></div>
-                            <div class="section-title mt-3">RESPUESTAS RECIBIDAS</div>
-                            <div class="view-card" id="dPorEstado"></div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="info-card h-100">
+                                <div class="info-title"><i class="fa-solid fa-gauge-high"></i> Ritmo de envío</div>
+                                <div id="dRitmo"></div>
+                            </div>
                         </div>
-                        <div class="col-12 col-lg-8">
-                            <div class="section-title">CONTACTOS</div>
-                            <div class="d-flex flex-wrap gap-2 mb-2">
-                                <select class="form-select glass-input" style="max-width:190px;" id="fContactos" aria-label="Filtrar contactos" onchange="cambiarFiltroContactos()">
-                                    <option value="todos">Todos</option>
-                                    <option value="Pendiente">Pendientes</option>
-                                    <option value="Enviado">Enviados</option>
-                                    <option value="Error">Con error</option>
-                                    <option value="Respondieron">Respondieron</option>
-                                </select>
-                                <input type="text" class="form-control glass-input" style="max-width:260px;" id="bContactos" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="Buscar nombre, celular, ID..." aria-label="Buscar contacto" onkeyup="if(event.key==='Enter') cambiarFiltroContactos()">
-                                <button class="btn-soft" aria-label="Buscar" onclick="cambiarFiltroContactos()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <div class="info-card h-100">
+                                <div class="info-title"><i class="fa-regular fa-calendar-check"></i> Cuánto tardará</div>
+                                <div id="dPlan"></div>
                             </div>
-                            <div class="table-responsive view-card p-0">
-                                <table class="table table-sm table-hover mb-0 tabla-contactos">
-                                    <thead><tr><th>ID</th><th>Nombre</th><th>Celular</th><th>Recupe</th><th>Envío</th><th>Respuesta</th><th>Fecha resp.</th><th>iddeal</th><th>Opción</th></tr></thead>
-                                    <tbody id="dTabla"></tbody>
-                                </table>
+                        </div>
+                        <div class="col-12 col-xl-4">
+                            <div class="info-card h-100">
+                                <div class="info-title"><i class="fa-solid fa-reply"></i> Cuando responden</div>
+                                <div id="dReglas"></div>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span class="text-muted" style="font-size:0.75rem;" id="dPagInfo"></span>
-                                <div class="d-flex gap-2">
-                                    <button class="btn-soft sm" aria-label="Página anterior" onclick="cambiarPagina(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                                    <button class="btn-soft sm" aria-label="Página siguiente" onclick="cambiarPagina(1)"><i class="fa-solid fa-chevron-right"></i></button>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">RESPUESTAS RECIBIDAS</div>
+                    <div class="d-flex flex-wrap gap-2 mb-4" id="dPorEstado"></div>
+
+                    <div class="section-title">CONTACTOS</div>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <select class="form-select glass-input" style="max-width:190px;" id="fContactos" aria-label="Filtrar contactos" onchange="cambiarFiltroContactos()">
+                            <option value="todos">Todos</option>
+                            <option value="Pendiente">Pendientes</option>
+                            <option value="Enviado">Enviados</option>
+                            <option value="Error">Con error</option>
+                            <option value="Respondieron">Respondieron</option>
+                        </select>
+                        <input type="text" class="form-control glass-input" style="max-width:260px;" id="bContactos" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="Buscar nombre, celular, ID..." aria-label="Buscar contacto" onkeyup="if(event.key==='Enter') cambiarFiltroContactos()">
+                        <button class="btn-soft" aria-label="Buscar" onclick="cambiarFiltroContactos()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                    <div class="table-responsive view-card p-0">
+                        <table class="table table-sm table-hover mb-0 tabla-contactos">
+                            <thead><tr><th>ID</th><th>Nombre</th><th>Celular</th><th>Recupe</th><th>Envío</th><th>Respuesta</th><th>Fecha resp.</th><th>iddeal</th><th>Opción</th></tr></thead>
+                            <tbody id="dTabla"></tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="text-muted" style="font-size:0.75rem;" id="dPagInfo"></span>
+                        <div class="d-flex gap-2">
+                            <button class="btn-soft sm" aria-label="Página anterior" onclick="cambiarPagina(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button class="btn-soft sm" aria-label="Página siguiente" onclick="cambiarPagina(1)"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
                     </div>
                 </div>
@@ -802,16 +827,52 @@
             : renderPlanHtml(plan, c.codigo, true);
 
         document.getElementById('dRitmo').innerHTML =
-            `<div style="font-size:0.85rem;"><b>${c.lote}</b> contactos cada <b>${c.intervaloMin}</b> min <span class="text-muted">(± ${c.jitterMin} min)</span></div>` +
-            `<div class="text-muted" style="font-size:0.78rem;">Entre las ${c.horaDesde}:00 y las ${c.horaHasta}:00 (Lima)</div>` +
-            `<div class="text-muted" style="font-size:0.78rem;">Último lote: ${c.loteActual || 'ninguno'}</div>`;
+            `<div class="info-big">${c.lote} contactos cada ${c.intervaloMin} min</div>` +
+            `<div class="info-sub">± ${c.jitterMin} min al azar para que no sea fijo</div>` +
+            `<div class="info-row mt-2"><span class="k">Horario</span><span class="v">${c.horaDesde}:00 a ${c.horaHasta}:00 (Lima)</span></div>` +
+            `<div class="info-row"><span class="k">Último lote</span><span class="v">${c.loteActual || 'ninguno'}</span></div>`;
 
-        document.getElementById('dReglas').innerHTML = narrativaRespuestas(c);
+        document.getElementById('dReglas').innerHTML = resumenRespuestas(c);
 
         const estados = Object.keys(k.porEstado);
         document.getElementById('dPorEstado').innerHTML = estados.length
-            ? estados.map(e => `<div class="d-flex justify-content-between border-bottom py-1" style="font-size:0.8rem;"><span>${escapeHtml(e)}</span><b>${fmt(k.porEstado[e])}</b></div>`).join('')
+            ? estados.map(e => `<span class="resp-chip">${escapeHtml(e)} <b>${fmt(k.porEstado[e])}</b></span>`).join('')
             : '<span class="text-muted" style="font-size:0.8rem;">Aún no hay respuestas.</span>';
+    }
+
+    // Resumen corto de lo que pasa con cada respuesta; el detalle completo se abre con el botón
+    function resumenRespuestas(c) {
+        const e = escapeHtml;
+        const d = c.deal || {};
+        const reglas = c.reglas || [];
+        const etiqueta = {
+            registrar: ['acc-registrar', 'Solo anota en el Sheet'],
+            actualizar_deal: ['acc-actualizar', 'Actualiza el deal'],
+            crear_o_actualizar: ['acc-crear', 'Crea o actualiza deal'],
+            crear_siempre: ['acc-crear', 'Crea deal']
+        };
+        const usaBitrix = reglas.some(r => r.accion !== 'registrar');
+        let h = '';
+        if (reglas.length) {
+            h += reglas.map(r => {
+                const t = etiqueta[r.accion] || etiqueta.registrar;
+                return `<div class="info-row"><span class="v text-start">${e(r.estado)}</span><span class="acc-badge ${t[0]}">${t[1]}</span></div>`;
+            }).join('');
+        } else {
+            h += '<div class="info-sub">Sin reglas: todo se anota solo en el Sheet.</div>';
+        }
+        if (usaBitrix) {
+            h += `<div class="info-row mt-2"><span class="k">Funnel / etapa</span><span class="v">${e(d.categoryId || '—')} · ${e(d.stageId || '—')}</span></div>`;
+            h += `<div class="info-row"><span class="k">RMKT_Nombre</span><span class="v">${e(d.codigoMkt || '—')}</span></div>`;
+            const correo = !d.notificarCorreo ? 'No' : (d.correoPara ? e(d.correoPara) : '<span class="text-danger">Sin destinatario</span>');
+            h += `<div class="info-row"><span class="k">Correo al asesor</span><span class="v">${correo}</span></div>`;
+        }
+        h += '<button type="button" class="btn-soft sm mt-3" onclick="verExplicacion()"><i class="fa-regular fa-circle-question"></i> Ver explicación completa</button>';
+        return h;
+    }
+
+    function verExplicacion() {
+        Swal.fire({ title: 'Qué pasa cuando responden', html: '<div class="text-start">' + narrativaRespuestas(detalle) + '</div>', width: 640, confirmButtonText: 'Entendido' });
     }
 
     function textoRmkt(d) {
@@ -858,7 +919,9 @@
                 `<b>Deal existente:</b> solo se escriben el link del chat y los campos RMKT: ${textoRmkt(d)}. ` +
                 'No se cambia la etapa ni el funnel.</div></div>';
         }
-        if (d.notificarCorreo) {
+        if (d.notificarCorreo && !d.correoPara) {
+            h += '<div class="nx-aviso mt-2"><i class="fa-solid fa-triangle-exclamation mt-1"></i><div><b>Correo:</b> está activado pero no hay destinatario, así que no se enviará. Edita la campaña y escribe el correo en «Correo para».</div></div>';
+        } else if (d.notificarCorreo) {
             h += '<div class="nx-aviso mt-2" style="background:#F3F1FF;border-color:#D9D2FF;color:#3311DB;"><i class="fa-solid fa-envelope mt-1"></i><div>' +
                 `<b>Correo:</b> cuando se crea un deal se avisa a <b>${e(d.correoPara || '—')}</b>${d.correoCc ? ' (CC ' + e(d.correoCc) + ')' : ''}, ` +
                 `desde la cuenta de Gmail de <b>${e(c.marca)}</b>, con el asunto <b>«${e(d.correoAsunto || 'por defecto')}»</b>.</div></div>`;
@@ -1142,12 +1205,13 @@
         const pie = `Lotes: <b>${escapeHtml(nombres)}</b>. El último lleva ${fmt(plan.ultimoLote)} contactos. Es una estimación: n8n revisa cada 5 min y cada lote varía por los minutos aleatorios.`;
         const fechas = `Empieza <b>${fmtLima(plan.inicio)}</b> y termina aprox. <b>${fmtLima(plan.fin)}</b> <span class="text-muted">(hora de Lima)</span>.`;
         if (compacto) {
-            return `<div style="font-size:0.82rem; text-align:left;">
-                <div><b>${fmt(plan.total)}</b> contactos en <b>${fmt(plan.lotes)}</b> lotes de ${fmt(plan.lote)}</div>
-                <div>Hasta <b>${fmt(plan.contactosDia)}</b> por día (${fmt(plan.porDia)} lotes)</div>
-                <div>Duración: <b>≈ ${plan.dias} día${plan.dias === 1 ? '' : 's'}</b></div>
-                <div class="mt-1">${fechas}</div>
-                <div class="text-muted mt-1" style="font-size:0.72rem;">${pie}</div></div>`;
+            const plural = (n, uno, varios) => fmt(n) + ' ' + (n === 1 ? uno : varios);
+            return `<div style="text-align:left;">
+                <div class="info-big">≈ ${plan.dias} día${plan.dias === 1 ? '' : 's'}</div>
+                <div class="info-sub">${plural(plan.total, 'contacto', 'contactos')} en ${plural(plan.lotes, 'lote', 'lotes')} de ${fmt(plan.lote)} · hasta ${fmt(plan.contactosDia)} por día</div>
+                <div class="info-row mt-2"><span class="k">Empieza</span><span class="v">${fmtLima(plan.inicio)}</span></div>
+                <div class="info-row"><span class="k">Termina aprox.</span><span class="v">${fmtLima(plan.fin)}</span></div>
+                <div class="text-muted mt-2" style="font-size:0.7rem;">Lotes: ${escapeHtml(nombres)} · Hora de Lima. Es una estimación.</div></div>`;
         }
         const caja = (n, l) => `<div class="col-6 col-md-3"><div class="stat-box"><div class="n">${n}</div><div class="l">${l}</div></div></div>`;
         return `<div class="row g-2 mb-2">${caja(fmt(plan.total), 'Contactos')}${caja(fmt(plan.lotes), 'Lotes de ' + fmt(plan.lote))}${caja(fmt(plan.contactosDia), 'Máx. por día')}${caja('≈ ' + plan.dias + (plan.dias === 1 ? ' día' : ' días'), 'Duración')}</div>
