@@ -479,6 +479,7 @@
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Celular (con código de país)</label><select class="form-select glass-input" id="mapCelular" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">iddeal (opcional) <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si tu archivo trae el <b>iddeal</b> de Bitrix, elige esa columna. El contacto subirá a Chatfuel con ese IDDeal y, al responder, se <b>actualiza esa negociación</b>.<br>Si no lo trae, deja «(ninguna)»: al responder se <b>crea una negociación nueva</b>."></i></label><select class="form-select glass-input" id="mapIddeal" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead / opción (opcional) <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si tu archivo trae un tipo o programa por contacto (por ejemplo la carrera), elige esa columna y se enviará a Chatfuel y a Bitrix como TipoLead.<br>Si no, deja «(ninguna)» y se usa el «TipoLead por defecto» de la pestaña Respuestas."></i></label><select class="form-select glass-input" id="mapTipo" onchange="procesarContactos()"></select></div>
+                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">País si falta <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si el celular tiene solo 9 dígitos (sin código de país), se le agrega este código. Déjalo vacío para no agregar nada."></i></label><input type="text" inputmode="numeric" maxlength="3" class="form-control glass-input" id="mapPais" value="51" placeholder="51" oninput="procesarContactos()"></div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 mt-3" id="resumenCsv"></div>
                                 <div class="table-responsive view-card p-0 mt-3">
@@ -490,6 +491,15 @@
                                 <div class="text-muted mt-1" style="font-size:0.7rem;">Vista previa de los primeros 8 contactos válidos.</div>
                             </div>
                             <div class="text-muted mt-3" style="font-size:0.8rem;" id="avisoContactosEdicion"></div>
+
+                            <hr class="my-4">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <div class="section-title mb-0">DATOS ADICIONALES PARA CHATFUEL (OPCIONAL) <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Cada fila manda una columna de tu archivo o Sheet a un <b>atributo de Chatfuel</b> cuando se crea el contacto.<br>Escribe el nombre de la <b>columna</b> y el nombre del <b>atributo</b> tal como está en Chatfuel (distingue mayúsculas). Si una celda está vacía, ese dato no se envía."></i></div>
+                                <button type="button" class="btn-soft sm" onclick="agregarExtra()"><i class="fa-solid fa-plus text-primary"></i> Añadir dato</button>
+                            </div>
+                            <div class="text-muted mb-2" style="font-size:0.75rem;">Además del nombre, celular, iddeal y TipoLead, puedes mandar más columnas a Chatfuel cuando se crea el contacto. Si no necesitas ninguna, déjalo vacío.</div>
+                            <div id="extrasContainer" class="d-flex flex-column gap-2"></div>
+                            <datalist id="listaColumnas"></datalist>
                         </div>
 
                         <!-- 2. RITMO Y VISTA PREVIA -->
@@ -802,6 +812,7 @@
             detalle.contadores = res.contadores;
             detalle.grupos = res.grupos || [];
             detalle.yaEmpezo = !!res.yaEmpezo;
+            detalle.extrasSinColumna = res.extrasSinColumna || [];
             filtroC = { filtro: 'todos', busqueda: '', pagina: 1 };
             document.getElementById('fContactos').value = 'todos';
             document.getElementById('bContactos').value = '';
@@ -867,6 +878,15 @@
             `<div class="info-row"><span class="k">Variable <span class="nx-uf-val">attributes</span></span>` +
             (c.atributo ? `<span class="v nx-uf-val">${escapeHtml(c.atributo)}</span>` : `<span class="v text-danger">sin valor (edita la campaña)</span>`) + `</div>`;
 
+        // datos adicionales que se mandan a Chatfuel
+        const extrasDet = c.extras || [];
+        if (extrasDet.length) {
+            document.getElementById('dRitmo').innerHTML += `<div class="info-row"><span class="k">Datos adicionales</span><span class="v text-start" style="max-width:62%;">` +
+                extrasDet.map(x => {
+                    const falta = (detalle.extrasSinColumna || []).indexOf(x.columna) !== -1;
+                    return `<div class="${falta ? 'text-danger' : ''}">${escapeHtml(x.columna)} <i class="fa-solid fa-arrow-right" style="font-size:.6rem;"></i> <span class="nx-uf-val">${escapeHtml(x.atributo)}</span>${falta ? ' · falta la columna en el Sheet' : ''}</div>`;
+                }).join('') + `</span></div>`;
+        }
         document.getElementById('dReglas').innerHTML = resumenRespuestas(c);
         renderGrupos();
 
@@ -1011,6 +1031,7 @@
         detalle.contadores = res.contadores;
         detalle.grupos = res.grupos || [];
         detalle.yaEmpezo = !!res.yaEmpezo;
+        detalle.extrasSinColumna = res.extrasSinColumna || [];
         renderDetalle();
         await cargarContactos();
         cargarListaSilencioso();
@@ -1125,6 +1146,8 @@
             document.getElementById('inpDesde').value = c.horaDesde;
             document.getElementById('inpHasta').value = c.horaHasta;
             (c.reglas || []).forEach(r => agregarRegla(r));
+            document.getElementById('extrasContainer').innerHTML = '';
+            (c.extras || []).forEach(x => agregarExtra(x));
             const d = c.deal || {};
             document.getElementById('dealCategoria').value = d.categoryId || '';
             document.getElementById('dealEtapa').value = d.stageId || '';
@@ -1151,6 +1174,7 @@
             document.getElementById('formTitle').innerText = 'Nueva campaña';
             llenarSelects('', '');
             ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpAtributo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealDetalles', 'dealInteres', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('extrasContainer').innerHTML = '';
             document.getElementById('dealOrigen').value = 'Chatfuel';
             document.getElementById('correoAsunto').value = CORREO_DEFAULT.asunto;
             document.getElementById('correoHtml').value = CORREO_DEFAULT.html;
@@ -1203,6 +1227,33 @@
         }
         document.getElementById('reglasContainer').appendChild(div);
     }
+
+    // ---------- datos adicionales para Chatfuel ----------
+    function agregarExtra(data) {
+        const div = document.createElement('div');
+        div.className = 'dynamic-row';
+        div.innerHTML = `
+            <input type="text" class="form-control glass-input ex-columna" list="listaColumnas" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="Columna (ej. Carrera)" aria-label="Columna del archivo o Sheet" style="flex:1;">
+            <i class="fa-solid fa-arrow-right text-muted d-none d-sm-inline" aria-hidden="true"></i>
+            <input type="text" class="form-control glass-input ex-atributo" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="Atributo en Chatfuel (ej. Carrera)" aria-label="Atributo en Chatfuel" style="flex:1;">
+            <button type="button" class="btn-soft danger sm" aria-label="Quitar dato" title="Quitar" onclick="this.parentElement.remove(); revisarExtras()"><i class="fa-solid fa-trash"></i></button>`;
+        const inCol = div.querySelector('.ex-columna'), inAtr = div.querySelector('.ex-atributo');
+        if (data) { inCol.value = data.columna || ''; inAtr.value = data.atributo || ''; }
+        // al salir de la columna, si el atributo está vacío se propone el mismo nombre sin espacios ni tildes
+        inCol.addEventListener('change', () => {
+            if (!inAtr.value.trim()) inAtr.value = inCol.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+            revisarExtras();
+        });
+        inAtr.addEventListener('input', revisarExtras);
+        document.getElementById('extrasContainer').appendChild(div);
+    }
+    function leerExtras() {
+        return Array.from(document.querySelectorAll('#extrasContainer .dynamic-row')).map(r => ({
+            columna: r.querySelector('.ex-columna').value.trim(), atributo: r.querySelector('.ex-atributo').value.trim()
+        })).filter(e => e.columna || e.atributo);
+    }
+    // si ya hay un archivo cargado, se vuelven a leer los datos con las columnas elegidas
+    function revisarExtras() { if (csv.encabezados.length) procesarContactos(); }
 
     function toggleCorreo() {
         const on = document.getElementById('dealNotificar').checked;
@@ -1422,12 +1473,15 @@
         document.getElementById('mapCelular').innerHTML = opciones(adivinar(['celular', 'telefono', 'phone', 'whatsapp', 'movil', 'cel']));
         document.getElementById('mapIddeal').innerHTML = opciones(adivinar(['iddeal', 'dealid']));
         document.getElementById('mapTipo').innerHTML = opciones(adivinar(['tipolead', 'opcion', 'tipo']));
+        document.getElementById('listaColumnas').innerHTML = csv.encabezados.map(h => `<option value="${escapeHtml(h)}"></option>`).join('');
     }
 
     // El celular ya debe venir con código de país: solo se limpian símbolos y espacios
     function normalizarCelular(raw) {
         let d = String(raw || '').replace(/\D/g, '');
         if (d.startsWith('00')) d = d.slice(2);
+        const pais = (document.getElementById('mapPais').value || '').replace(/\D/g, '');
+        if (pais && d.length === 9) d = pais + d;      // número local sin código de país
         return (d.length >= 10 && d.length <= 15) ? d : '';
     }
 
@@ -1437,16 +1491,21 @@
         const iEnvio = fuente === 'sheet' ? adivinar(['estadoenvio']) : -1;
         const celda = (f, i) => i >= 0 && f[i] !== undefined ? String(f[i]).trim() : '';
 
-        nuevos = { validos: [], invalidos: 0, duplicados: 0, yaProcesados: 0 };
+        nuevos = { validos: [], invalidos: 0, duplicados: 0, yaProcesados: 0, ejemploInvalido: '', extrasFaltan: [] };
         if (iCel < 0) { renderResumenCsv(); estimar(); return; }
+        // datos adicionales: columna del archivo -> índice (si la columna no está en el archivo se avisa)
+        const extras = leerExtras().map(e => ({ columna: e.columna, i: csv.encabezados.indexOf(e.columna) }));
+        nuevos.extrasFaltan = extras.filter(e => e.i === -1).map(e => e.columna);
         const vistos = new Set();
         csv.filas.forEach(f => {
             const cel = normalizarCelular(celda(f, iCel));
             if (cel && vistos.has(cel)) { nuevos.duplicados++; return; }
             if (cel) vistos.add(cel);
             if (celda(f, iEnvio) !== '') { nuevos.yaProcesados++; return; }
-            if (!cel) { nuevos.invalidos++; return; }
-            nuevos.validos.push({ nombres: celda(f, iNom), apellidos: celda(f, iApe), celular: cel, iddeal: celda(f, iDeal), tipoLead: celda(f, iTipo) });
+            if (!cel) { nuevos.invalidos++; if (!nuevos.ejemploInvalido) nuevos.ejemploInvalido = celda(f, iCel) || '(vacío)'; return; }
+            const datosExtra = {};
+            extras.forEach(e => { if (e.i !== -1) datosExtra[e.columna] = celda(f, e.i); });
+            nuevos.validos.push({ nombres: celda(f, iNom), apellidos: celda(f, iApe), celular: cel, iddeal: celda(f, iDeal), tipoLead: celda(f, iTipo), extras: datosExtra });
         });
         renderResumenCsv();
         estimar();
@@ -1457,16 +1516,18 @@
             `<span class="badge bg-success-subtle text-success border px-3 py-2">${fmt(nuevos.validos.length)} válidos</span>` +
             `<span class="badge ${nuevos.invalidos ? 'bg-danger-subtle text-danger' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.invalidos)} celulares inválidos (se omiten)</span>` +
             `<span class="badge ${nuevos.duplicados ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.duplicados)} repetidos (se omiten)</span>` +
-            (nuevos.yaProcesados ? `<span class="badge bg-light text-muted border px-3 py-2">${fmt(nuevos.yaProcesados)} ya tienen Estado envío (no se reenvían)</span>` : '');
+            (nuevos.yaProcesados ? `<span class="badge bg-light text-muted border px-3 py-2">${fmt(nuevos.yaProcesados)} ya tienen Estado envío (no se reenvían)</span>` : '') +
+            (nuevos.invalidos ? `<div class="w-100 text-muted" style="font-size:0.74rem;">Ejemplo de celular inválido: <b>${escapeHtml(nuevos.ejemploInvalido)}</b>. Debe tener de 10 a 15 dígitos con el código de país (o 9 dígitos y el «País si falta»).</div>` : '') +
+            ((nuevos.extrasFaltan || []).length ? `<div class="w-100 text-danger" style="font-size:0.74rem;">En los datos adicionales, estas columnas no están en el archivo: <b>${escapeHtml(nuevos.extrasFaltan.join(', '))}</b>.</div>` : '');
         document.getElementById('previewCsv').innerHTML = nuevos.validos.slice(0, 8).map(c =>
-            `<tr><td>${escapeHtml(c.nombres)}</td><td>${escapeHtml(c.apellidos)}</td><td>${escapeHtml(c.celular)}</td><td>${escapeHtml(c.iddeal)}</td><td>${escapeHtml(c.tipoLead)}</td></tr>`).join('');
+            `<tr>${[['Nombres', c.nombres], ['Apellidos', c.apellidos], ['Celular', c.celular], ['iddeal', c.iddeal], ['Opción', c.tipoLead]].map(x => `<td data-label="${x[0]}" class="${x[1] ? '' : 'vacio'}">${escapeHtml(x[1])}</td>`).join('')}</tr>`).join('');
     }
 
     // ---------- guardar ----------
     // nombres de las columnas elegidas (el servidor los busca en los encabezados del Sheet)
     function leerMapeo() {
         const nombre = id => { const i = Number(document.getElementById(id).value); return i >= 0 ? csv.encabezados[i] : ''; };
-        return { nombres: nombre('mapNombres'), apellidos: nombre('mapApellidos'), celular: nombre('mapCelular'), iddeal: nombre('mapIddeal'), tipoLead: nombre('mapTipo') };
+        return { nombres: nombre('mapNombres'), apellidos: nombre('mapApellidos'), celular: nombre('mapCelular'), iddeal: nombre('mapIddeal'), tipoLead: nombre('mapTipo'), pais: (document.getElementById('mapPais').value || '').replace(/\D/g, '') };
     }
 
     function leerFormulario() {
@@ -1489,6 +1550,7 @@
             horaDesde: document.getElementById('inpDesde').value,
             horaHasta: document.getElementById('inpHasta').value,
             reglas: reglas,
+            extras: leerExtras(),
             deal: {
                 categoryId: document.getElementById('dealCategoria').value.trim(),
                 stageId: document.getElementById('dealEtapa').value.trim(),
@@ -1516,6 +1578,9 @@
             if (!csv.encabezados.length) return Swal.fire('Falta leer el Sheet', 'Pega el enlace y pulsa «Leer» para elegir las columnas.', 'warning');
             if (!d.mapeo.celular) return Swal.fire('Falta el celular', 'Elige qué columna del Sheet tiene el celular.', 'warning');
         }
+        const extrasInc = leerExtras().find(e => !e.columna || !e.atributo);
+        if (extrasInc) return Swal.fire('Datos adicionales incompletos', 'Cada fila necesita la columna y el atributo de Chatfuel. Completa o quita la fila.', 'warning');
+        if (csv.encabezados.length && (nuevos.extrasFaltan || []).length) return Swal.fire('Columna no encontrada', 'En los datos adicionales, estas columnas no están en el archivo: ' + nuevos.extrasFaltan.join(', ') + '.', 'warning');
         if (!editando && nuevos.validos.length === 0) {
             const seguir = await Swal.fire({ title: 'Sin contactos', text: 'No cargaste ningún contacto todavía. ¿Crear la campaña vacía? Puedes agregarlos después.', icon: 'question', showCancelButton: true, confirmButtonText: 'Crear vacía', cancelButtonText: 'Volver' });
             if (!seguir.isConfirmed) return;
