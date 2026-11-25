@@ -479,7 +479,6 @@
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">Celular (con código de país)</label><select class="form-select glass-input" id="mapCelular" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">iddeal (opcional) <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si tu archivo trae el <b>iddeal</b> de Bitrix, elige esa columna. El contacto subirá a Chatfuel con ese IDDeal y, al responder, se <b>actualiza esa negociación</b>.<br>Si no lo trae, deja «(ninguna)»: al responder se <b>crea una negociación nueva</b>."></i></label><select class="form-select glass-input" id="mapIddeal" onchange="procesarContactos()"></select></div>
                                     <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead / opción (opcional) <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si tu archivo trae un tipo o programa por contacto (por ejemplo la carrera), elige esa columna y se enviará a Chatfuel y a Bitrix como TipoLead.<br>Si no, deja «(ninguna)» y se usa el «TipoLead por defecto» de la pestaña Respuestas."></i></label><select class="form-select glass-input" id="mapTipo" onchange="procesarContactos()"></select></div>
-                                    <div class="col-6 col-md"><label class="form-label text-muted" style="font-size:0.7rem;">País si falta <i class="fa-solid fa-circle-info nx-info" tabindex="0" data-bs-toggle="tooltip" data-bs-html="true" data-bs-trigger="hover focus click" data-bs-title="Si el celular tiene solo 9 dígitos (sin código de país), se le agrega este código. Déjalo vacío para no agregar nada."></i></label><input type="text" inputmode="numeric" maxlength="3" class="form-control glass-input" id="mapPais" value="51" placeholder="51" oninput="procesarContactos()"></div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 mt-3" id="resumenCsv"></div>
                                 <div class="table-responsive view-card p-0 mt-3">
@@ -1480,8 +1479,6 @@
     function normalizarCelular(raw) {
         let d = String(raw || '').replace(/\D/g, '');
         if (d.startsWith('00')) d = d.slice(2);
-        const pais = (document.getElementById('mapPais').value || '').replace(/\D/g, '');
-        if (pais && d.length === 9) d = pais + d;      // número local sin código de país
         return (d.length >= 10 && d.length <= 15) ? d : '';
     }
 
@@ -1517,7 +1514,7 @@
             `<span class="badge ${nuevos.invalidos ? 'bg-danger-subtle text-danger' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.invalidos)} celulares inválidos (se omiten)</span>` +
             `<span class="badge ${nuevos.duplicados ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted'} border px-3 py-2">${fmt(nuevos.duplicados)} repetidos (se omiten)</span>` +
             (nuevos.yaProcesados ? `<span class="badge bg-light text-muted border px-3 py-2">${fmt(nuevos.yaProcesados)} ya tienen Estado envío (no se reenvían)</span>` : '') +
-            (nuevos.invalidos ? `<div class="w-100 text-muted" style="font-size:0.74rem;">Ejemplo de celular inválido: <b>${escapeHtml(nuevos.ejemploInvalido)}</b>. Debe tener de 10 a 15 dígitos con el código de país (o 9 dígitos y el «País si falta»).</div>` : '') +
+            (nuevos.invalidos ? `<div class="w-100 text-muted" style="font-size:0.74rem;">Ejemplo de celular inválido: <b>${escapeHtml(nuevos.ejemploInvalido)}</b>. Debe tener de 10 a 15 dígitos, con el código de país.</div>` : '') +
             ((nuevos.extrasFaltan || []).length ? `<div class="w-100 text-danger" style="font-size:0.74rem;">En los datos adicionales, estas columnas no están en el archivo: <b>${escapeHtml(nuevos.extrasFaltan.join(', '))}</b>.</div>` : '');
         document.getElementById('previewCsv').innerHTML = nuevos.validos.slice(0, 8).map(c =>
             `<tr>${[['Nombres', c.nombres], ['Apellidos', c.apellidos], ['Celular', c.celular], ['iddeal', c.iddeal], ['Opción', c.tipoLead]].map(x => `<td data-label="${x[0]}" class="${x[1] ? '' : 'vacio'}">${escapeHtml(x[1])}</td>`).join('')}</tr>`).join('');
@@ -1527,7 +1524,7 @@
     // nombres de las columnas elegidas (el servidor los busca en los encabezados del Sheet)
     function leerMapeo() {
         const nombre = id => { const i = Number(document.getElementById(id).value); return i >= 0 ? csv.encabezados[i] : ''; };
-        return { nombres: nombre('mapNombres'), apellidos: nombre('mapApellidos'), celular: nombre('mapCelular'), iddeal: nombre('mapIddeal'), tipoLead: nombre('mapTipo'), pais: (document.getElementById('mapPais').value || '').replace(/\D/g, '') };
+        return { nombres: nombre('mapNombres'), apellidos: nombre('mapApellidos'), celular: nombre('mapCelular'), iddeal: nombre('mapIddeal'), tipoLead: nombre('mapTipo') };
     }
 
     function leerFormulario() {
