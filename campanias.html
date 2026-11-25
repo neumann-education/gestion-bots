@@ -260,6 +260,11 @@
     .acc-crear { background: rgba(67,24,255,0.10); color: #4318FF; }
     .resp-chip { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-color); border-radius: 999px; padding: 5px 6px 5px 14px; font-size: 0.8rem; font-weight: 600; }
     .resp-chip b { background: rgba(5,205,153,0.14); color: #059669; border-radius: 999px; padding: 1px 10px; }
+    .grupo-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 6px; font-size: 0.8rem; }
+    .grupo-fila + .grupo-fila { border-top: 1px dashed var(--border-color); }
+    .grupo-fila .g-nombre { font-family: ui-monospace, Consolas, monospace; font-weight: 700; }
+    .grupo-fila .g-datos { color: var(--text-muted); font-size: 0.74rem; }
+    .grupo-fila .g-lado { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .nx-info { color: #94A3B8; font-size: 0.72rem; margin-left: 3px; cursor: help; outline: none; }
     .nx-info:hover, .nx-info:focus { color: #4F46E5; }
     .nx-uf-val { font-family: ui-monospace, Consolas, monospace; color: #4F46E5; }
@@ -348,6 +353,10 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="section-title">GRUPOS DE ENVÍO</div>
+                    <div class="text-muted mb-2" style="font-size:0.75rem;">Cada grupo es un lote (su Recupe). Salen en orden, pero puedes enviar uno ya sin esperar su turno; los demás siguen su ritmo.</div>
+                    <div class="view-card p-2 mb-4" id="dGrupos" style="max-height:260px; overflow:auto;"></div>
 
                     <div class="section-title">RESPUESTAS RECIBIDAS</div>
                     <div class="d-flex flex-wrap gap-2 mb-4" id="dPorEstado"></div>
@@ -504,7 +513,7 @@
                             </div>
                             <div class="text-muted mt-2" style="font-size:0.75rem;">
                                 El siguiente envío se programa a <b>intervalo ± minutos aleatorios</b> después del anterior (hora de Lima). Fuera de la ventana horaria no se envía.
-                                Puedes cambiar estos valores en cualquier momento, incluso con la campaña activa.
+                                Puedes cambiar estos valores en cualquier momento, incluso con la campaña activa. Si cambias el <b>tamaño del lote</b>, los contactos que faltan por enviar se vuelven a agrupar; los grupos ya enviados no se tocan.
                             </div>
                             <div class="section-title mt-4">VISTA PREVIA DEL ENVÍO</div>
                             <div class="view-card" id="estimacion" style="font-size:0.85rem;"></div>
@@ -772,6 +781,8 @@
             const res = await api('campDetalle', { codigo: codigo });
             detalle = res.campana;
             detalle.contadores = res.contadores;
+            detalle.grupos = res.grupos || [];
+            detalle.yaEmpezo = !!res.yaEmpezo;
             filtroC = { filtro: 'todos', busqueda: '', pagina: 1 };
             document.getElementById('fContactos').value = 'todos';
             document.getElementById('bContactos').value = '';
@@ -793,9 +804,6 @@
             `<span><i class="fa-solid fa-hashtag me-1"></i>${escapeHtml(c.codigo)}</span>` +
             `<span><i class="fa-brands fa-whatsapp me-1"></i>${escapeHtml(c.botAlias)}</span>` +
             `<span><i class="fa-regular fa-calendar me-1"></i>Creada: ${escapeHtml(c.creada)}</span>` +
-            (c.atributo
-                ? `<span title="Variable que se envía a Chatfuel para disparar la plantilla"><i class="fa-solid fa-tag me-1"></i>attributes = <b class="nx-uf-val">${escapeHtml(c.atributo)}</b></span>`
-                : `<span class="text-danger" title="Sin valor, Chatfuel no disparará la plantilla"><i class="fa-solid fa-triangle-exclamation me-1"></i>attributes sin valor (edita la campaña)</span>`) +
             `<span><a href="${escapeHtml(c.urlHoja)}" target="_blank" class="text-decoration-none"><i class="fa-solid fa-table me-1"></i>Abrir Sheet</a></span>`;
 
         const pendientes = k.pendientes + k.enviando;
@@ -836,14 +844,57 @@
             `<div class="info-big">${c.lote} contactos cada ${c.intervaloMin} min</div>` +
             `<div class="info-sub">± ${c.jitterMin} min al azar para que no sea fijo</div>` +
             `<div class="info-row mt-2"><span class="k">Horario</span><span class="v">${c.horaDesde}:00 a ${c.horaHasta}:00 (Lima)</span></div>` +
-            `<div class="info-row"><span class="k">Último lote</span><span class="v">${c.loteActual || 'ninguno'}</span></div>`;
+            `<div class="info-row"><span class="k">Último lote</span><span class="v">${c.loteActual || 'ninguno'}</span></div>` +
+            `<div class="info-row"><span class="k">Variable <span class="nx-uf-val">attributes</span></span>` +
+            (c.atributo ? `<span class="v nx-uf-val">${escapeHtml(c.atributo)}</span>` : `<span class="v text-danger">sin valor (edita la campaña)</span>`) + `</div>`;
 
         document.getElementById('dReglas').innerHTML = resumenRespuestas(c);
+        renderGrupos();
 
         const estados = Object.keys(k.porEstado);
         document.getElementById('dPorEstado').innerHTML = estados.length
             ? estados.map(e => `<span class="resp-chip">${escapeHtml(e)} <b>${fmt(k.porEstado[e])}</b></span>`).join('')
             : '<span class="text-muted" style="font-size:0.8rem;">Aún no hay respuestas.</span>';
+    }
+
+    // Lista de grupos (Recupe) con su estado y el botón para enviar uno ya
+    function renderGrupos() {
+        const c = detalle;
+        const grupos = c.grupos || [];
+        const caja = document.getElementById('dGrupos');
+        if (!grupos.length) { caja.innerHTML = '<span class="text-muted p-2 d-block" style="font-size:0.8rem;">Aún no hay grupos: se arman cuando guardas los contactos.</span>'; return; }
+        const puedeEnviar = puedeEditar && (c.estado === 'Activa' || c.estado === 'Pausada');
+        caja.innerHTML = grupos.map(g => {
+            let badge;
+            if (c.grupoForzado === g.recupe) badge = '<span class="acc-badge acc-actualizar">Sale en minutos</span>';
+            else if (g.pendientes === 0) badge = '<span class="badge-envio envio-Enviado">Enviado</span>';
+            else if (g.pendientes === g.total) badge = '<span class="badge-envio envio-Pendiente">Pendiente</span>';
+            else badge = `<span class="badge-envio envio-Enviando">Parcial · ${fmt(g.pendientes)} faltan</span>`;
+            const boton = puedeEnviar && g.pendientes > 0 && c.grupoForzado !== g.recupe
+                ? `<button type="button" class="btn-soft sm" data-recupe="${escapeHtml(g.recupe)}" onclick="enviarGrupo(this.dataset.recupe)"><i class="fa-solid fa-paper-plane"></i>Enviar ahora</button>` : '';
+            const datos = `${fmt(g.total)} contactos` + (g.errores ? ` · ${fmt(g.errores)} con error` : '');
+            return `<div class="grupo-fila"><div><div class="g-nombre">${escapeHtml(g.recupe)}</div><div class="g-datos">${datos}</div></div><div class="g-lado">${badge}${boton}</div></div>`;
+        }).join('');
+    }
+
+    async function enviarGrupo(recupe) {
+        const g = (detalle.grupos || []).find(x => x.recupe === recupe);
+        if (!g) return;
+        const pausada = detalle.estado === 'Pausada';
+        const ok = await Swal.fire({
+            title: '¿Enviar este grupo ahora?',
+            html: `Se enviarán los <b>${fmt(g.pendientes)}</b> contactos pendientes de <b>${escapeHtml(recupe)}</b> en los próximos minutos (dentro del horario de ${detalle.horaDesde}:00 a ${detalle.horaHasta}:00).<br><br>` +
+                  (pausada ? 'La campaña <b>sigue pausada</b>: solo sale este grupo.' : 'Los demás grupos siguen enviándose a su ritmo.'),
+            icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, enviar', cancelButtonText: 'Cancelar'
+        });
+        if (!ok.isConfirmed) return;
+        showLoader(true);
+        try {
+            await api('campEnviarGrupo', { codigo: detalle.codigo, recupe: recupe });
+            nxToast('success', 'El grupo sale en los próximos minutos');
+            await recargarDetalle();
+        } catch (e) { errorSwal(e); }
+        showLoader(false);
     }
 
     // Resumen corto de lo que pasa con cada respuesta; el detalle completo se abre con el botón
@@ -939,6 +990,8 @@
         const res = await api('campDetalle', { codigo: detalle.codigo });
         detalle = res.campana;
         detalle.contadores = res.contadores;
+        detalle.grupos = res.grupos || [];
+        detalle.yaEmpezo = !!res.yaEmpezo;
         renderDetalle();
         await cargarContactos();
         cargarListaSilencioso();
@@ -1069,6 +1122,12 @@
             document.getElementById('dealCc').value = d.correoCc || '';
             document.getElementById('avisoContactosEdicion').innerHTML = `Esta campaña ya tiene <b>${fmt(c.total)}</b> contactos. Si subes otro CSV, se <b>suman</b> los celulares nuevos; los que ya estén no se repiten. ` + (c.urlHoja ? `<a href="${escapeHtml(c.urlHoja)}" target="_blank" rel="noopener" class="text-decoration-none"><i class="fa-solid fa-table me-1"></i>Abrir el Sheet de esta campaña</a>` : '');
             elegirFuente('csv');
+            // una vez que empezó el envío ya no se agregan contactos (los grupos no deben moverse)
+            if (c.loteActual > 0 || c.enviados > 0) {
+                document.getElementById('panelCsv').style.display = 'none';
+                document.getElementById('tituloContactos').innerText = 'CONTACTOS';
+                document.getElementById('avisoContactosEdicion').innerHTML = `Esta campaña ya empezó a enviarse (<b>${fmt(c.total)}</b> contactos): <b>ya no se pueden agregar más</b>, para que los grupos no se muevan. Para contactos nuevos crea otra campaña. ` + (c.urlHoja ? `<a href="${escapeHtml(c.urlHoja)}" target="_blank" rel="noopener" class="text-decoration-none"><i class="fa-solid fa-table me-1"></i>Abrir el Sheet</a>` : '');
+            }
         } else {
             document.getElementById('formTitle').innerText = 'Nueva campaña';
             llenarSelects('', '');
