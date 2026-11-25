@@ -43,6 +43,11 @@
     .modal-backdrop.show { opacity: 1; background: rgba(27, 37, 75, 0.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
     .modal .btn-close { opacity: .6; transition: .2s; border-radius: 50%; padding: 10px; }
     .modal .btn-close:hover { opacity: 1; background-color: #f1f5f9; }
+    /* Encabezado y pie del modal: fondo sólido y una línea fina, para que lo que se desplaza no quede pegado ni se vea por detrás */
+    .glass-modal .modal-header { background: #fff; border-bottom: 1px solid #EEF2F7 !important; padding-bottom: 14px !important; border-radius: 20px 20px 0 0; position: relative; z-index: 2; }
+    .glass-modal .modal-footer { background: #fff !important; border-top: 1px solid #EEF2F7 !important; border-radius: 0 0 20px 20px; padding-top: 14px !important; padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
+    .glass-modal .modal-footer > * { margin: 0; }
+    @media (max-width: 767.98px) { .modal-fullscreen-md-down .glass-modal .modal-header, .modal-fullscreen-md-down .glass-modal .modal-footer { border-radius: 0; } }
 
     .kpi-icon-wrapper { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
     .icon-blue { background: rgba(67,24,255,0.1); color: var(--accent-blue); }
@@ -114,7 +119,7 @@
     .nx-chips::-webkit-scrollbar { display: none; }
     .brand-chip { background: #fff; border: 1px solid var(--border-color); color: var(--text-muted); font-weight: 600; font-size: 0.8rem; padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: .2s; white-space: nowrap; flex-shrink: 0; }
     .brand-chip:hover { border-color: var(--accent-blue); color: var(--accent-blue); transform: translateY(-1px); }
-    .brand-chip.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; box-shadow: 0 6px 14px rgba(67,24,255,0.22); }
+    .brand-chip.active { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
     @media (max-width: 575.98px) { .nx-chip-label { display: none; } }
 
     /* Pestañas */
@@ -122,7 +127,7 @@
     .custom-tabs-container::-webkit-scrollbar { display: none; }
     .custom-tabs-container .nav-link { white-space: nowrap; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-radius: 9px; padding: 7px 16px; margin: 0 2px; transition: .2s; }
     .custom-tabs-container .nav-link:hover { color: var(--accent-blue); }
-    .custom-tabs-container .nav-link.active { background: #fff; color: var(--accent-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid var(--border-color); }
+    .custom-tabs-container .nav-link.active { background: #fff; color: var(--accent-blue); box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--border-color); }
     @media (max-width: 575.98px) { .custom-tabs-container { width: 100%; } .custom-tabs-container .nav-link { padding: 7px 12px; font-size: 0.8rem; } }
 
     /* Estados vacíos, carga y esqueletos */
@@ -331,8 +336,6 @@
                 </div>
                 
                 <div class="modal-body p-3 p-md-4 pt-3">
-                    <hr class="text-muted opacity-25 mt-0 mb-4">
-                    
                     <div class="row g-0">
                         <!-- Columna Izquierda (Ancha: 70%) -->
                         <div class="col-12 col-lg-8 pe-lg-4 border-end-lg" id="leftViewCol">
@@ -437,7 +440,6 @@
                                             <option value="IEmpresa">IEmpresa</option>
                                             <option value="ITAE">ITAE</option>
                                             <option value="Eurocoach">Eurocoach</option>
-                                            <option value="MadisonOk">MadisonOk</option>
                                         </select>
                                     </div>
                                     <div class="col-12 col-md-8">
@@ -446,7 +448,7 @@
                                     </div>
                                 </div>
 
-                                <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 mt-4">
                                     <div class="section-title mb-0">DESCRIPCIÓN DEL PROYECTO (ENLACES)</div>
                                     <button type="button" class="btn-soft sm" onclick="addDynamicRow('argumentariosContainer', 'archivo')"><i class="fa-solid fa-plus text-primary"></i> Añadir Archivo</button>
                                 </div>
