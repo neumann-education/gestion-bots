@@ -252,6 +252,8 @@
     .nx-seg-btn.active { background: #fff; color: var(--accent-blue); box-shadow: 0 2px 8px rgba(67,24,255,0.12); }
     .dynamic-row { display: flex; gap: 8px; align-items: center; background: #fff; padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); transition: border-color .2s; }
     .dynamic-row:hover { border-color: #cbd5e1; }
+    .rg-notif { display: flex; align-items: center; gap: 6px; font-size: .78rem; white-space: nowrap; cursor: pointer; color: var(--text-muted, #64748b); }
+    .rg-notif input:disabled + span { opacity: .45; }
     @media (max-width: 575.98px) { .dynamic-row { flex-wrap: wrap; } .dynamic-row .rg-estado, .dynamic-row .rg-accion { flex: 1 1 100% !important; } .dynamic-row .btn { margin-left: auto; } }
     .csv-drop { border: 2px dashed #CBD5E1; border-radius: 14px; background: #f8fafc; padding: 26px 18px; text-align: center; cursor: pointer; transition: .2s; }
     .csv-drop:hover, .csv-drop:focus-visible { background: #f3f1ff; border-color: var(--accent-blue); }
@@ -607,7 +609,7 @@
 
                                 <div class="section-title mt-4">CORREO AL ASESOR</div>
                                 <label class="d-flex align-items-center gap-2 mb-3" style="font-size:0.85rem; cursor:pointer;">
-                                    <input type="checkbox" id="dealNotificar" onchange="toggleCorreo()"> Avisar por correo a los asesores cuando se cree un deal
+                                    <input type="checkbox" id="dealNotificar" onchange="toggleCorreo()"> Avisar por correo a los asesores cuando se cree un deal <span class="text-muted">(en cada estado de la pestaña de respuestas eliges si avisa o no)</span>
                                 </label>
                                 <div id="boxCorreoDetalle" style="display:none;">
                                     <div class="nx-aviso mb-3"><i class="fa-solid fa-envelope mt-1"></i><div>El correo sale desde la cuenta de Gmail de la <b>marca</b> de la campaña (se asigna en n8n, un nodo Gmail por marca). Aquí editas a quién va y cómo se ve.</div></div>
@@ -1104,7 +1106,7 @@
         let h = '<div style="font-size:0.8rem; line-height:1.55;">';
         h += '<p class="mb-2">Cuando alguien responde a la plantilla, la respuesta se anota en el Sheet (columnas <b>Estado</b> y <b>Fecha Respuesta</b>) y después:</p>';
         if (reglas.length) {
-            h += '<ul class="ps-3 mb-2">' + reglas.map(r => `<li class="mb-1">Si responde <b>«${e(r.estado)}»</b>: ${frases[r.accion] || e(r.accion)}</li>`).join('') + '</ul>';
+            h += '<ul class="ps-3 mb-2">' + reglas.map(r => `<li class="mb-1">Si responde <b>«${e(r.estado)}»</b>: ${frases[r.accion] || e(r.accion)}${r.accion !== 'registrar' && d.notificarCorreo ? (r.notificar === false ? ' <span class="text-muted">(sin correo)</span>' : ' <span class="text-muted">(avisa por correo)</span>') : ''}</li>`).join('') + '</ul>';
             h += '<p class="mb-2">Cualquier otra respuesta solo se anota en el Sheet.</p>';
         } else {
             h += '<p class="mb-2"><b>No hay reglas</b>: todas las respuestas solo se anotan en el Sheet y no se toca Bitrix.</p>';
@@ -1370,7 +1372,7 @@
             document.getElementById('inpHasta').value = 20;
             document.getElementById('dealNotificar').checked = false;
             document.getElementById('avisoContactosEdicion').innerHTML = '';
-            agregarRegla({ estado: 'Respondió', accion: 'registrar' });
+            agregarRegla({ estado: 'Respondió', accion: 'registrar', notificar: false });
             agregarRegla({ estado: 'No_por_el_momento', accion: 'registrar' });
             if (duplicarDe) copiarConfiguracion(duplicarDe);
         }
@@ -1405,11 +1407,18 @@
         div.innerHTML = `
             <input type="text" class="form-control glass-input rg-estado" placeholder="Estado exacto (ej. Administración)" style="flex:1;">
             <select class="form-select glass-input rg-accion" style="flex:1.4;">${ACCIONES.map(a => `<option value="${a.id}">${a.label}</option>`).join('')}</select>
+            <label class="rg-notif" title="Si está marcado, esta respuesta avisa por correo al asesor (cuando el deal se crea o actualiza)"><input type="checkbox" class="rg-notificar"><span><i class="fa-solid fa-envelope"></i> Avisar por correo</span></label>
             <button type="button" class="btn-soft danger sm" aria-label="Quitar estado" title="Quitar" onclick="this.parentElement.remove()"><i class="fa-solid fa-trash"></i></button>`;
+        const selAccion = div.querySelector('.rg-accion'), chkNotif = div.querySelector('.rg-notificar');
+        // sin deal no hay a quién avisar: la casilla se apaga
+        const ajustarNotif = () => { chkNotif.disabled = selAccion.value === 'registrar'; };
+        selAccion.addEventListener('change', ajustarNotif);
         if (data && data.estado !== undefined) {
             div.querySelector('.rg-estado').value = data.estado;
-            div.querySelector('.rg-accion').value = data.accion || 'registrar';
+            selAccion.value = data.accion || 'registrar';
         }
+        chkNotif.checked = !(data && data.notificar === false);
+        ajustarNotif();
         document.getElementById('reglasContainer').appendChild(div);
     }
 
@@ -1975,7 +1984,7 @@
 
     function leerFormulario() {
         const reglas = Array.from(document.querySelectorAll('#reglasContainer .dynamic-row')).map(r => ({
-            estado: r.querySelector('.rg-estado').value.trim(), accion: r.querySelector('.rg-accion').value
+            estado: r.querySelector('.rg-estado').value.trim(), accion: r.querySelector('.rg-accion').value, notificar: r.querySelector('.rg-notificar').checked
         })).filter(r => r.estado);
         return {
             codigo: limpiarCodigo(document.getElementById('inpCodigo').value),
