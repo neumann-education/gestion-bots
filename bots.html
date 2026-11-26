@@ -175,6 +175,10 @@
 
     @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
+/* mensaje de validación dentro de los avisos: sin franja pegada a los bordes */
+.nx-swal .swal2-validation-message { margin: 14px 0 0; border-radius: 12px; background: #fef2f2; color: #b91c1c; font-size: .82rem; font-weight: 600; padding: 10px 14px; }
+.nx-swal .swal2-validation-message::before { background: #ef4444; }
+
     /* ===== Propios de Bots ===== */
     /* el token se oculta sin usar type="password", para que Chrome no ofrezca guardar contraseñas */
     .token-oculto { -webkit-text-security: disc; text-security: disc; }
@@ -215,6 +219,7 @@
                 <div class="nx-avatar" id="navAvatar" aria-hidden="true">?</div>
             </div>
             <button class="btn-primary-custom nx-btn-nuevo" onclick="abrirFormulario(null)"><i class="fa-solid fa-plus"></i> Nuevo bot</button>
+            <button class="btn-soft" title="Agregar una asesora a la lista de correos" aria-label="Nueva asesora" onclick="nuevaAsesora()"><i class="fa-solid fa-user-plus"></i><span class="d-none d-xl-inline">Asesora</span></button>
             <button class="btn-soft" title="Campañas" aria-label="Campañas" onclick="location.href='campanias.html'"><i class="fa-solid fa-bullhorn"></i><span class="d-none d-lg-inline">Campañas</span></button>
             <button class="btn-soft" title="Volver a Nexus" aria-label="Volver a Nexus" onclick="volverANexus()"><i class="fa-solid fa-house"></i><span class="d-none d-lg-inline">Nexus</span></button>
         </div>
@@ -297,6 +302,45 @@
         });
     }
 
+    // ===== NX-UI: alta rápida de asesoras (se usa en Nexus, Bots y Campañas) =====
+    // llamar(action, datos) debe devolver la respuesta del servidor (lanza error si falla)
+    async function nxAgregarAsesora(llamar, marcaSugerida, alTerminar) {
+        const e = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        let marcas = [];
+        try {
+            const cat = await llamar('campCatalogo', {});
+            marcas = Array.from(new Set((cat.asesores || []).map(a => a.marca).concat((cat.funnels || []).map(f => f.marca)).filter(Boolean)));
+        } catch (err) { /* sin lista de marcas: se escribe a mano */ }
+        const r = await Swal.fire({
+            title: 'Nueva asesora',
+            html: `<div class="text-start" style="display:grid;gap:12px;">
+                <div><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="nxAsMarca">Marca</label>
+                    <input id="nxAsMarca" class="form-control glass-input" list="nxAsMarcas" autocomplete="off" placeholder="Elige o escribe" value="${e(marcaSugerida || '')}">
+                    <datalist id="nxAsMarcas">${marcas.map(m => `<option value="${e(m)}"></option>`).join('')}</datalist></div>
+                <div><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="nxAsNombre">Nombre</label>
+                    <input id="nxAsNombre" class="form-control glass-input" autocomplete="off" placeholder="Ej. Yoselin Rodriguez"></div>
+                <div><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="nxAsCorreo">Correo</label>
+                    <input id="nxAsCorreo" type="email" class="form-control glass-input" autocomplete="off" placeholder="asesora@empresa.com"></div>
+                <div><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="nxAsCodigo">Código de asesor en Bitrix <span style="font-weight:400;">(opcional)</span></label>
+                    <input id="nxAsCodigo" class="form-control glass-input" inputmode="numeric" autocomplete="off" placeholder="Ej. 153"></div>
+            </div>`,
+            showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', focusConfirm: false,
+            didOpen: () => document.getElementById(marcaSugerida ? 'nxAsNombre' : 'nxAsMarca').focus(),
+            preConfirm: async () => {
+                const v = id => document.getElementById(id).value.trim();
+                const datos = { marca: v('nxAsMarca'), nombre: v('nxAsNombre'), correo: v('nxAsCorreo').toLowerCase(), codigo: v('nxAsCodigo') };
+                if (!datos.marca || !datos.nombre) { Swal.showValidationMessage('Completa la marca y el nombre.'); return false; }
+                if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(datos.correo)) { Swal.showValidationMessage('El correo no parece válido.'); return false; }
+                try { await llamar('campAgregarAsesora', datos); return datos; }
+                catch (err) { Swal.showValidationMessage(err.message || 'No se pudo guardar'); return false; }
+            }
+        });
+        if (r.isConfirmed && r.value) {
+            nxToast('success', 'Asesora agregada');
+            if (alTerminar) alTerminar(r.value);
+        }
+    }
+
     // Misma URL del Apps Script que usa Nexus
     const API_URL = 'https://script.google.com/macros/s/AKfycbwqGCUJN2vpqV_Ie7T66zWTPFGt1XPMoeOl0ERwCzKd7hbBPj1gOX-qeL4qrHs-g6LdfA/exec';
     const NEXUS_URL = 'index.html';
@@ -316,6 +360,8 @@
         document.getElementById('loaderTexto').innerText = texto || 'Cargando bots...';
     }
     function volverANexus() { location.href = NEXUS_URL; }
+    function nuevaAsesora() { nxAgregarAsesora(api, '').catch(errorSwal); }
+
     function errorSwal(e) { Swal.fire('No se pudo completar', e.message || String(e), 'error'); }
 
     async function api(action, extra) {
