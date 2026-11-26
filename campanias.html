@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <style>
+    /* ===== NX-UI: estilos compartidos de Campañas y Bots (mantener iguales en ambas páginas) ===== */
     html { font-size: 14px; }
     :root {
         --bg-color: #F4F7FE;
@@ -280,6 +281,12 @@
     .nx-info:hover, .nx-info:focus { color: #4F46E5; }
     .nx-uf-val { font-family: ui-monospace, Consolas, monospace; color: #4F46E5; }
     .nx-uf { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: #94A3B8; margin-left: 4px; }
+.nx-bot-num { margin-top: 6px; font-size: 0.78rem; color: #15803d; font-weight: 600; display: flex; gap: 6px; align-items: center; }
+    .nx-bot-num:empty { display: none; }
+    .nx-bot-num.sin-numero { color: var(--text-muted); font-weight: 500; }
+.nx-correo-asunto { font-size: 0.82rem; padding: 8px 12px; border: 1px solid var(--border-color); border-bottom: 0; border-radius: 12px 12px 0 0; background: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nx-correo-prev { width: 100%; height: 420px; border: 1px solid var(--border-color); border-radius: 0 0 12px 12px; background: #fff; display: block; }
+    @media (max-width: 991.98px) { .nx-correo-prev, #correoHtml { height: 340px !important; } }
     .nx-html { font-family: ui-monospace, Consolas, monospace; font-size: 0.74rem; line-height: 1.45; white-space: pre; overflow: auto; resize: vertical; }
     /* Selector de correos (chips + lista con flecha) */
     .nx-combo { position: relative; }
@@ -469,7 +476,8 @@
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Bot de Chatfuel</label>
-                                    <select class="form-select glass-input" id="inpBot"></select>
+                                    <select class="form-select glass-input" id="inpBot" onchange="mostrarNumeroBot()"></select>
+                                    <div class="nx-bot-num" id="botNumero" aria-live="polite"></div>
                                 </div>
                                 <div class="col-12 col-md-8">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Atributo que dispara el mensaje (attributes)</label>
@@ -612,19 +620,24 @@
                                             <div class="nx-combo" id="comboCc"></div><input type="hidden" id="dealCc">
                                         </div>
                                         <div class="col-12"><label class="form-label text-muted" style="font-size:0.7rem;">Asunto</label><input type="text" class="form-control glass-input" id="correoAsunto" autocomplete="off"></div>
-                                        <div class="col-12">
+                                        <div class="col-12 col-lg-6">
                                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
-                                                <label class="form-label text-muted mb-0" style="font-size:0.7rem;">Contenido del correo (HTML)</label>
-                                                <div class="d-flex gap-2">
-                                                    <button type="button" class="btn-soft sm" onclick="previewCorreo()"><i class="fa-regular fa-eye"></i> Vista previa</button>
-                                                    <button type="button" class="btn-soft sm" onclick="restaurarCorreo()"><i class="fa-solid fa-rotate-left"></i> Plantilla de la marca</button>
-                                                </div>
+                                                <label class="form-label text-muted mb-0" style="font-size:0.7rem;" for="correoHtml">Contenido del correo (HTML)</label>
+                                                <button type="button" class="btn-soft sm" onclick="restaurarCorreo()"><i class="fa-solid fa-rotate-left"></i> Plantilla de la marca</button>
                                             </div>
-                                            <textarea class="form-control glass-input nx-html" id="correoHtml" rows="10" spellcheck="false" autocomplete="off"></textarea>
+                                            <textarea class="form-control glass-input nx-html" id="correoHtml" rows="16" spellcheck="false" autocomplete="off" style="height:420px;"></textarea>
                                             <div class="mt-2" style="font-size:0.72rem;">
                                                 <span class="text-muted">Pulsa un dato para insertarlo donde está el cursor (asunto o contenido):</span>
                                                 <div class="d-flex flex-wrap gap-1 mt-1" id="tokensCorreo"></div>
                                             </div>
+                                        </div>
+                                        <div class="col-12 col-lg-6">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                                                <label class="form-label text-muted mb-0" style="font-size:0.7rem;">Vista previa <span class="fw-normal">(datos de ejemplo, se actualiza al escribir)</span></label>
+                                                <button type="button" class="btn-soft sm" onclick="previewCorreo()"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> Ampliar</button>
+                                            </div>
+                                            <div class="nx-correo-asunto"><span class="text-muted">Asunto:</span> <b id="prevAsunto"></b></div>
+                                            <iframe id="prevCorreo" class="nx-correo-prev" sandbox="" title="Vista previa del correo"></iframe>
                                         </div>
                                     </div>
                                 </div>
@@ -725,6 +738,7 @@
         const p = plantillaCorreo(document.getElementById('inpMarca').value);
         document.getElementById('correoAsunto').value = p.asunto;
         document.getElementById('correoHtml').value = p.html;
+        actualizarVistaCorreo();
     }
     const TOKENS_CORREO = ['marca', 'campana', 'nombre', 'apellido', 'celular', 'respuesta', 'link_chatfuel', 'link_bitrix', 'iddeal', 'tipo_lead', 'rmkt_nombre', 'rmkt_detalles', 'rmkt_interes'];
     let campoCorreoActivo = 'correoHtml';
@@ -1201,6 +1215,17 @@
     }
 
     // ---------- formulario ----------
+    // debajo de la lista de bots: el número de WhatsApp desde el que sale la campaña
+    function mostrarNumeroBot() {
+        const caja = document.getElementById('botNumero'), alias = document.getElementById('inpBot').value;
+        const bot = db.bots.find(b => b.alias === alias);
+        if (!bot) { caja.innerHTML = ''; return; }
+        caja.innerHTML = bot.numero
+            ? `<i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Sale desde el número <b>${escapeHtml(bot.numero)}</b>`
+            : '<i class="fa-solid fa-circle-info" aria-hidden="true"></i> Este bot no tiene número registrado (puedes agregarlo en Bots).';
+        caja.classList.toggle('sin-numero', !bot.numero);
+    }
+
     function llenarSelects(marcaSel, botSel) {
         document.getElementById('inpMarca').innerHTML = '<option value="">Seleccione...</option>' + MARCAS.map(m => `<option value="${m}" ${m === marcaSel ? 'selected' : ''}>${m}</option>`).join('');
         document.getElementById('inpBot').innerHTML = '<option value="">Seleccione...</option>' + db.bots.map(b => `<option value="${escapeHtml(b.alias)}" ${b.alias === botSel ? 'selected' : ''}>${escapeHtml(b.nombre)}</option>`).join('');
@@ -1216,6 +1241,7 @@
             const c = db.campanas.find(x => x.codigo === editando);
             document.getElementById('formTitle').innerText = 'Editar campaña';
             llenarSelects(c.marca, c.botAlias);
+            mostrarNumeroBot();
             document.getElementById('inpNombre').value = c.nombre;
             document.getElementById('inpCodigo').value = c.codigo;
             document.getElementById('inpPrefijo').value = c.prefijoId;
@@ -1258,6 +1284,7 @@
         } else {
             document.getElementById('formTitle').innerText = 'Nueva campaña';
             llenarSelects('', '');
+            mostrarNumeroBot();
             ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpAtributo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealDetalles', 'dealInteres', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('extrasContainer').innerHTML = '';
             etapaAuto = ''; funnelAnterior = '';
@@ -1514,6 +1541,7 @@
     function toggleCorreo() {
         const on = document.getElementById('dealNotificar').checked;
         document.getElementById('boxCorreoDetalle').style.display = on ? 'block' : 'none';
+        if (on) actualizarVistaCorreo();
     }
 
     // ---------- correo: datos que se pueden insertar, vista previa y plantilla ----------
@@ -1529,6 +1557,7 @@
         campo.value = campo.value.slice(0, ini) + texto + campo.value.slice(fin);
         campo.focus();
         campo.selectionStart = campo.selectionEnd = ini + texto.length;
+        actualizarVistaCorreo();
     }
     function restaurarCorreo() {
         Swal.fire({ title: '¿Volver a la plantilla de la marca?', text: 'Se reemplazan el asunto y el contenido que tienes ahora.', icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, restaurar', cancelButtonText: 'Cancelar' })
@@ -1537,6 +1566,7 @@
                 const p = plantillaCorreo(document.getElementById('inpMarca').value);
                 document.getElementById('correoAsunto').value = p.asunto;
                 document.getElementById('correoHtml').value = p.html;
+                actualizarVistaCorreo();
             });
     }
     function llenarCorreo(texto, escapar) {
@@ -1548,6 +1578,23 @@
         };
         return texto.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (k in datos ? (escapar ? escapeHtml(datos[k]) : String(datos[k])) : m));
     }
+    // vista previa al lado del HTML: se rearma poco después de dejar de escribir
+    let temporizadorVista = null;
+    function actualizarVistaCorreo() {
+        clearTimeout(temporizadorVista);
+        temporizadorVista = setTimeout(() => {
+            const marco = document.getElementById('prevCorreo');
+            if (!marco) return;
+            document.getElementById('prevAsunto').textContent = llenarCorreo(document.getElementById('correoAsunto').value, false);
+            marco.srcdoc = llenarCorreo(document.getElementById('correoHtml').value, true);
+        }, 250);
+    }
+    ['correoHtml', 'correoAsunto', 'inpNombre', 'inpMarca', 'dealMkt', 'dealDetalles', 'dealInteres'].forEach(id => {
+        document.addEventListener('DOMContentLoaded', () => {
+            const el = document.getElementById(id);
+            if (el) { el.addEventListener('input', actualizarVistaCorreo); el.addEventListener('change', actualizarVistaCorreo); }
+        });
+    });
     function previewCorreo() {
         const asunto = llenarCorreo(document.getElementById('correoAsunto').value, false);
         const html = llenarCorreo(document.getElementById('correoHtml').value, true);
