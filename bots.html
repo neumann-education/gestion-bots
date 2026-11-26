@@ -264,6 +264,11 @@
                         <input type="text" id="fNombre" class="form-control glass-input" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="ej. Neumann - WhatsApp principal">
                     </div>
                     <div class="mb-3">
+                        <label class="form-label" for="fNumero">Número de WhatsApp del bot <span class="text-muted fw-normal">(opcional)</span></label>
+                        <input type="text" id="fNumero" class="form-control glass-input" inputmode="tel" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="ej. 51987654321">
+                        <div class="text-muted mt-1" style="font-size:0.74rem;">Se muestra al elegir el bot en una campaña, para saber desde qué número sale.</div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label" for="fBotId">Bot ID de Chatfuel</label>
                         <input type="text" id="fBotId" class="form-control glass-input" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="ej. 661379e7...">
                     </div>
@@ -413,7 +418,7 @@
 
     function renderGrid() {
         const q = document.getElementById('searchInput').value.toLowerCase().trim();
-        const lista = bots.filter(b => !q || (b.alias + ' ' + b.nombre + ' ' + b.botId).toLowerCase().includes(q));
+        const lista = bots.filter(b => !q || (b.alias + ' ' + b.nombre + ' ' + b.botId + ' ' + (b.numero || '')).toLowerCase().includes(q));
         document.getElementById('totalCount').innerText = lista.length + (lista.length === 1 ? ' Bot' : ' Bots');
         if (lista.length === 0) {
             document.getElementById('botGrid').innerHTML = bots.length
@@ -433,6 +438,11 @@
                             <span class="badge bg-light text-primary border mt-1">${escapeHtml(b.alias)}</span>
                         </div>
                         <span class="uso-pill ${enUso ? 'en-uso' : ''}">${b.campanas} campaña${b.campanas === 1 ? '' : 's'}</span>
+                    </div>
+                    <div class="section-title mb-1">Número</div>
+                    <div class="bot-dato mb-3">
+                        <span class="mono">${b.numero ? escapeHtml(b.numero) : '<span class="text-muted">sin número</span>'}</span>
+                        <i class="fa-brands fa-whatsapp text-muted" style="font-size:.85rem;" aria-hidden="true"></i>
                     </div>
                     <div class="section-title mb-1">Bot ID</div>
                     <div class="bot-dato mb-3">
@@ -471,6 +481,7 @@
         document.getElementById('fAlias').disabled = !!b;
         document.getElementById('fAliasAyuda').style.display = b ? 'none' : 'block';
         document.getElementById('fNombre').value = b ? b.nombre : '';
+        document.getElementById('fNumero').value = b ? (b.numero || '') : '';
         document.getElementById('fBotId').value = b ? b.botId : '';
         document.getElementById('fToken').value = '';
         document.getElementById('fToken').classList.add('token-oculto');
@@ -484,6 +495,7 @@
         const datos = {
             alias: document.getElementById('fAlias').value.trim(),
             nombre: document.getElementById('fNombre').value.trim(),
+            numero: document.getElementById('fNumero').value.trim(),
             botId: document.getElementById('fBotId').value.trim(),
             token: document.getElementById('fToken').value.trim()
         };
