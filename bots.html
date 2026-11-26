@@ -100,7 +100,7 @@
 
     /* Campos */
     .form-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
-    .glass-input { background: #fff !important; border: 1px solid var(--border-color) !important; border-radius: 10px; padding: 9px 12px; font-size: 0.88rem; font-weight: 500; color: var(--text-main); box-shadow: none !important; transition: border-color .2s, box-shadow .2s; }
+    .glass-input { background-color: #fff !important; border: 1px solid var(--border-color) !important; border-radius: 10px; padding: 9px 12px; font-size: 0.88rem; font-weight: 500; color: var(--text-main); box-shadow: none !important; transition: border-color .2s, box-shadow .2s; }
     .glass-input::placeholder { color: var(--text-soft); font-weight: 400; }
     .glass-input:hover { border-color: #cbd5e1 !important; }
     .glass-input:focus { border-color: var(--accent-blue) !important; box-shadow: 0 0 0 4px rgba(67,24,255,0.10) !important; }
@@ -110,7 +110,10 @@
     .nx-search input { padding-left: 38px; padding-top: 10px; padding-bottom: 10px; font-size: 0.92rem; width: 100%; }
     @media (max-width: 575.98px) { .nx-search { max-width: none; flex-basis: 100%; } }
     .nx-count { font-size: 0.85rem; font-weight: 700; padding: 8px 16px; border-radius: 999px; background: #fff; border: 1px solid var(--border-color); color: var(--text-main); white-space: nowrap; }
-    .form-select.glass-input { padding-right: 2.2rem; }
+    /* flecha de las listas desplegables (el fondo blanco ya no la borra) */
+    .form-select.glass-input { padding-right: 2.4rem; cursor: pointer; background-repeat: no-repeat !important; background-position: right 14px center !important; background-size: 12px 12px !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236b7a99' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important; }
+    .form-select.glass-input:focus { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234318ff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important; }
 
     /* Chips con desplazamiento horizontal en móvil */
     .nx-chip-line { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; min-width: 0; }
