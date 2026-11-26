@@ -275,6 +275,31 @@
     .nx-uf-val { font-family: ui-monospace, Consolas, monospace; color: #4F46E5; }
     .nx-uf { font-family: ui-monospace, Consolas, monospace; font-size: 0.62rem; color: #94A3B8; margin-left: 4px; }
     .nx-html { font-family: ui-monospace, Consolas, monospace; font-size: 0.74rem; line-height: 1.45; white-space: pre; overflow: auto; resize: vertical; }
+    /* Selector de correos (chips + lista con flecha) */
+    .nx-combo { position: relative; }
+    .nx-combo-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 42px; padding: 5px 38px 5px 8px !important; cursor: text; position: relative; }
+    .nx-combo.abierto .nx-combo-box { border-color: var(--accent-blue) !important; box-shadow: 0 0 0 4px rgba(67,24,255,0.10) !important; }
+    .nx-combo-flecha { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: .75rem; transition: transform .2s; pointer-events: none; }
+    .nx-combo.abierto .nx-combo-flecha { transform: translateY(-50%) rotate(180deg); }
+    .nx-mail { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; background: rgba(67,24,255,0.08); color: var(--accent-blue); border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 0.76rem; font-weight: 600; }
+    .nx-mail span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nx-mail button { border: 0; background: transparent; color: inherit; width: 18px; height: 18px; border-radius: 50%; line-height: 1; font-size: .7rem; padding: 0; flex-shrink: 0; }
+    .nx-mail button:hover { background: rgba(67,24,255,0.18); }
+    .nx-combo-input { flex: 1 1 120px; min-width: 90px; border: 0; outline: none; background: transparent; font-size: 0.86rem; color: var(--text-main); padding: 4px 2px; }
+    .nx-combo-menu { display: none; position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; background: #fff; border: 1px solid var(--border-color); border-radius: 14px; box-shadow: var(--shadow-lg); overflow: hidden; }
+    .nx-combo.abierto .nx-combo-menu { display: block; }
+    .nx-combo-tools { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; padding: 8px 12px; border-bottom: 1px solid #EEF2F7; font-size: 0.74rem; background: #f8fafc; }
+    .nx-combo-tools label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-muted); font-weight: 600; margin: 0; }
+    .nx-combo-tools button { border: 0; background: transparent; color: var(--accent-blue); font-weight: 700; padding: 0; font-size: 0.74rem; }
+    .nx-combo-lista { max-height: 240px; overflow-y: auto; }
+    .nx-combo-op { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: #fff; text-align: left; padding: 8px 12px; font-size: 0.82rem; }
+    .nx-combo-op:hover, .nx-combo-op:focus-visible { background: #f3f1ff; outline: none; }
+    .nx-combo-op .ck { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #CBD5E1; display: inline-flex; align-items: center; justify-content: center; font-size: .6rem; color: #fff; flex-shrink: 0; }
+    .nx-combo-op.on .ck { background: var(--accent-blue); border-color: var(--accent-blue); }
+    .nx-combo-op .tx { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+    .nx-combo-op .tx b { font-weight: 700; color: var(--text-main); }
+    .nx-combo-op .tx small { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; }
+    .nx-combo-vacio { padding: 14px 12px; color: var(--text-muted); font-size: 0.8rem; text-align: center; }
     .nx-token { border: 1px solid var(--border-color); background: #fff; color: var(--accent-blue); border-radius: 8px; padding: 3px 9px; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; transition: .2s; }
     .nx-token:hover { background: #f3f1ff; border-color: var(--accent-blue); }
     </style>
@@ -419,7 +444,7 @@
                             <div class="row g-3">
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Marca</label>
-                                    <select class="form-select glass-input" id="inpMarca" onchange="cambiarMarcaCorreo()"></select>
+                                    <select class="form-select glass-input" id="inpMarca" onchange="cambiarMarcaCorreo(); marcaCambiada()"></select>
                                 </div>
                                 <div class="col-12 col-md-8">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Nombre de la campaña</label>
@@ -539,13 +564,17 @@
                                 <div class="section-title mb-0">¿QUÉ HACER SEGÚN LA RESPUESTA DEL USUARIO?</div>
                                 <button type="button" class="btn-soft sm" onclick="agregarRegla()"><i class="fa-solid fa-plus text-primary"></i> Añadir estado</button>
                             </div>
-                            <div class="text-muted mb-2" style="font-size:0.75rem;">Escribe el valor exacto de <b>respuesta</b> que envía Chatfuel (ej. Respondió, No_por_el_momento, Administración). Un estado que no esté en la lista solo se registra en el Sheet.</div>
+                            <div class="text-muted mb-2" style="font-size:0.75rem;">Escribe el valor de <b>respuesta</b> que envía Chatfuel (ej. Respondió, No_por_el_momento, Administración). Un estado que no esté en la lista solo se registra en el Sheet.</div>
                             <div id="reglasContainer" class="d-flex flex-column gap-2 mb-4"></div>
 
                             <div id="boxDeal">
                                 <div class="section-title">DATOS DEL DEAL EN BITRIX (solo si algún estado crea o actualiza deal)</div>
                                 <div class="row g-3">
-                                    <div class="col-6 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Categoría / funnel (ID)</label><input type="text" class="form-control glass-input" id="dealCategoria" placeholder="127"></div>
+                                    <div class="col-6 col-md-3">
+                                        <label class="form-label text-muted" style="font-size:0.7rem;">Categoría / funnel</label>
+                                        <select class="form-select glass-input" id="dealFunnelSel" onchange="elegirFunnel()" aria-label="Funnel de Bitrix" style="display:none;"></select>
+                                        <input type="text" class="form-control glass-input" id="dealCategoria" inputmode="numeric" placeholder="ID del funnel (ej. 127)" oninput="autoEtapa()">
+                                    </div>
                                     <div class="col-6 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Etapa (STAGE_ID)</label><input type="text" class="form-control glass-input" id="dealEtapa" placeholder="C127:NEW"></div>
                                     <div class="col-12 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">Título del deal</label><input type="text" class="form-control glass-input" id="dealTitulo" placeholder="Lead ASecundaria"></div>
                                     <div class="col-12 col-md-3"><label class="form-label text-muted" style="font-size:0.7rem;">TipoLead por defecto</label><input type="text" class="form-control glass-input" id="dealTipo" placeholder="(opcional)"></div>
@@ -567,8 +596,14 @@
                                 <div id="boxCorreoDetalle" style="display:none;">
                                     <div class="nx-aviso mb-3"><i class="fa-solid fa-envelope mt-1"></i><div>El correo sale desde la cuenta de Gmail de la <b>marca</b> de la campaña (se asigna en n8n, un nodo Gmail por marca). Aquí editas a quién va y cómo se ve.</div></div>
                                     <div class="row g-3">
-                                        <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">Correo para (separados por coma)</label><input type="text" class="form-control glass-input" id="dealPara" autocomplete="off"></div>
-                                        <div class="col-12 col-md-6"><label class="form-label text-muted" style="font-size:0.7rem;">Con copia (CC)</label><input type="text" class="form-control glass-input" id="dealCc" autocomplete="off"></div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-muted" style="font-size:0.7rem;">Correo para</label>
+                                            <div class="nx-combo" id="comboPara"></div><input type="hidden" id="dealPara">
+                                        </div>
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label text-muted" style="font-size:0.7rem;">Con copia (CC)</label>
+                                            <div class="nx-combo" id="comboCc"></div><input type="hidden" id="dealCc">
+                                        </div>
                                         <div class="col-12"><label class="form-label text-muted" style="font-size:0.7rem;">Asunto</label><input type="text" class="form-control glass-input" id="correoAsunto" autocomplete="off"></div>
                                         <div class="col-12">
                                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
@@ -707,6 +742,7 @@
     // ---------- inicio ----------
     document.addEventListener('DOMContentLoaded', () => {
         renderTokens();
+        comboIniciar('Para'); comboIniciar('Cc');
         const saved = sessionStorage.getItem(SESSION_KEY);
         if (!saved) { volverANexus(); return; }
         try { currentUser = JSON.parse(saved); } catch (e) { volverANexus(); return; }
@@ -717,6 +753,7 @@
         document.getElementById('navAvatar').innerText = String(nombreUsuario).trim().charAt(0).toUpperCase();
         renderEsqueleto();
         cargarLista();
+        cargarCatalogo();
     });
 
     // la primera vez se muestran tarjetas "fantasma" en lugar de tapar toda la pantalla
@@ -1150,6 +1187,8 @@
             const d = c.deal || {};
             document.getElementById('dealCategoria').value = d.categoryId || '';
             document.getElementById('dealEtapa').value = d.stageId || '';
+            etapaAuto = d.categoryId ? `C${d.categoryId}:NEW` : '';
+            funnelAnterior = d.categoryId || '';
             document.getElementById('dealMkt').value = d.codigoMkt || '';
             document.getElementById('dealOrigen').value = d.origenMkt || 'Chatfuel';
             document.getElementById('dealDetalles').value = d.detallesMkt || '';
@@ -1174,6 +1213,7 @@
             llenarSelects('', '');
             ['inpNombre', 'inpCodigo', 'inpPrefijo', 'inpAtributo', 'inpLibro', 'inpHoja', 'dealCategoria', 'dealEtapa', 'dealMkt', 'dealDetalles', 'dealInteres', 'dealTitulo', 'dealTipo', 'dealPara', 'dealCc'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('extrasContainer').innerHTML = '';
+            etapaAuto = ''; funnelAnterior = '';
             document.getElementById('dealOrigen').value = 'Chatfuel';
             document.getElementById('correoAsunto').value = CORREO_DEFAULT.asunto;
             document.getElementById('correoHtml').value = CORREO_DEFAULT.html;
@@ -1191,6 +1231,8 @@
             agregarRegla({ estado: 'Respondió', accion: 'registrar' });
             agregarRegla({ estado: 'No_por_el_momento', accion: 'registrar' });
         }
+        armarFunnels();
+        comboCargar(document.getElementById('dealPara').value, document.getElementById('dealCc').value);
         toggleCorreo();
         actualizarHintCodigo();
         estimar();
@@ -1253,6 +1295,162 @@
     }
     // si ya hay un archivo cargado, se vuelven a leer los datos con las columnas elegidas
     function revisarExtras() { if (csv.encabezados.length) procesarContactos(); }
+
+    // ---------- catálogo: funnels y asesores (combos) ----------
+    let catalogo = { funnels: [], asesores: [] };
+    const ALIAS_MARCA = { blackwell: 'bgu', bgu: 'bgu', neumann: 'neumann', iempresa: 'iempresa', itae: 'itae', eurocoach: 'eurocoach' };
+    function claveMarca(m) { const k = String(m || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ''); return ALIAS_MARCA[k] || k; }
+
+    async function cargarCatalogo() {
+        try {
+            const res = await api('campCatalogo');
+            catalogo = { funnels: res.funnels || [], asesores: res.asesores || [] };
+        } catch (e) { catalogo = { funnels: [], asesores: [] }; }
+    }
+
+    // Funnel: lista con flecha agrupada por marca (primero las de la marca de la campaña) y la opción de escribir otro ID
+    function armarFunnels(idActual) {
+        const sel = document.getElementById('dealFunnelSel'), inp = document.getElementById('dealCategoria');
+        if (!catalogo.funnels.length) { sel.style.display = 'none'; inp.style.display = ''; return; }
+        const marcaCamp = claveMarca(document.getElementById('inpMarca').value);
+        const grupos = {};
+        catalogo.funnels.forEach(f => { (grupos[f.marca || 'Otros'] = grupos[f.marca || 'Otros'] || []).push(f); });
+        const nombres = Object.keys(grupos).sort((a, b) => (claveMarca(b) === marcaCamp) - (claveMarca(a) === marcaCamp));
+        sel.innerHTML = '<option value="">Seleccione un funnel...</option>' +
+            nombres.map(n => `<optgroup label="${escapeHtml(n)}">${grupos[n].map(f => `<option value="${escapeHtml(f.funnel)}">${escapeHtml(f.equipo || n)} · ${escapeHtml(f.funnel)}</option>`).join('')}</optgroup>`).join('') +
+            '<option value="__otro">Otro (escribir el ID)...</option>';
+        sel.style.display = '';
+        const id = String(idActual === undefined ? inp.value : idActual).trim();
+        if (id && catalogo.funnels.some(f => f.funnel === id)) { sel.value = id; inp.style.display = 'none'; }
+        else if (id) { sel.value = '__otro'; inp.style.display = ''; }
+        else { sel.value = ''; inp.style.display = 'none'; }
+    }
+    let funnelAnterior = '';
+    function elegirFunnel() {
+        const sel = document.getElementById('dealFunnelSel'), inp = document.getElementById('dealCategoria');
+        if (sel.value === '__otro') { inp.style.display = ''; inp.value = ''; inp.focus(); return; }
+        inp.style.display = 'none';
+        inp.value = sel.value;
+        autoEtapa();
+        // si el correo "Para" estaba vacío (o tenía el del funnel anterior), se propone el del equipo de este funnel
+        const f = catalogo.funnels.find(x => x.funnel === sel.value);
+        const previo = catalogo.funnels.find(x => x.funnel === funnelAnterior);
+        const actual = combos.Para.sel.join(', ');
+        if (f && f.para && (!actual || (previo && previo.para && actual === previo.para.split(/[,;\s]+/).filter(Boolean).join(', ')))) {
+            combos.Para.sel = f.para.split(/[,;\s]+/).map(x => x.trim().toLowerCase()).filter(esCorreo);
+            comboRender('Para');
+        }
+        funnelAnterior = sel.value;
+    }
+    // la etapa por defecto de un funnel es C{funnel}:NEW; solo se rellena si está vacía o era la automática
+    let etapaAuto = '';
+    function autoEtapa() {
+        const id = document.getElementById('dealCategoria').value.trim(), et = document.getElementById('dealEtapa');
+        if (!/^\d+$/.test(id)) return;
+        if (!et.value.trim() || et.value === etapaAuto) { etapaAuto = `C${id}:NEW`; et.value = etapaAuto; }
+    }
+
+    // ---------- selector de correos (chips + lista con flecha) ----------
+    const combos = { Para: { campo: 'dealPara', sel: [], todas: false, filtra: true }, Cc: { campo: 'dealCc', sel: [], todas: true, filtra: false } };
+    function esCorreo(t) { return /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(t); }
+    function comboOpciones(n) {
+        const c = combos[n];
+        const marcaCamp = claveMarca(document.getElementById('inpMarca').value);
+        let lista = catalogo.asesores;
+        if (c.filtra && !c.todas) lista = lista.filter(a => claveMarca(a.marca) === marcaCamp);
+        return lista;
+    }
+    function comboNombre(correo) {
+        const a = catalogo.asesores.find(x => x.correo.toLowerCase() === correo.toLowerCase());
+        return a && a.nombre ? a.nombre : correo;
+    }
+    function comboIniciar(n) {
+        const cont = document.getElementById('combo' + n);
+        cont.innerHTML = `<div class="form-control glass-input nx-combo-box" role="combobox" aria-expanded="false" aria-haspopup="listbox">
+                <span class="nx-combo-chips" style="display:contents;"></span>
+                <input type="text" class="nx-combo-input" autocomplete="off" data-lpignore="true" data-1p-ignore placeholder="Elige de la lista o escribe un correo" aria-label="Correo">
+                <i class="fa-solid fa-chevron-down nx-combo-flecha" aria-hidden="true"></i>
+            </div>
+            <div class="nx-combo-menu"><div class="nx-combo-tools"></div><div class="nx-combo-lista" role="listbox" aria-multiselectable="true"></div></div>`;
+        const caja = cont.querySelector('.nx-combo-box'), inp = cont.querySelector('.nx-combo-input');
+        const abrir = () => { cont.classList.add('abierto'); caja.setAttribute('aria-expanded', 'true'); comboRender(n); };
+        caja.addEventListener('click', e => { if (e.target.closest('.nx-mail button')) return; abrir(); inp.focus(); });
+        inp.addEventListener('focus', abrir);
+        inp.addEventListener('input', () => comboRender(n));
+        inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ',' || e.key === ';' || e.key === ' ') {
+                if (inp.value.trim()) { e.preventDefault(); comboAgregarEscrito(n); }
+            } else if (e.key === 'Backspace' && !inp.value && combos[n].sel.length) {
+                combos[n].sel.pop(); comboRender(n);
+            } else if (e.key === 'Escape') { comboCerrar(n); }
+        });
+        inp.addEventListener('blur', () => { if (inp.value.trim()) comboAgregarEscrito(n); });
+        comboRender(n);
+    }
+    function comboAgregarEscrito(n) {
+        const inp = document.querySelector('#combo' + n + ' .nx-combo-input');
+        const t = inp.value.trim().replace(/[,;]+$/, '').toLowerCase();
+        if (!esCorreo(t)) { if (t) nxToast('warning', 'Ese correo no parece válido'); return; }
+        if (!combos[n].sel.includes(t)) combos[n].sel.push(t);
+        inp.value = '';
+        comboRender(n);
+    }
+    function comboCerrar(n) {
+        const cont = document.getElementById('combo' + n);
+        cont.classList.remove('abierto');
+        cont.querySelector('.nx-combo-box').setAttribute('aria-expanded', 'false');
+    }
+    function comboAlternar(n, correo) {
+        const c = combos[n], i = c.sel.indexOf(correo);
+        if (i === -1) c.sel.push(correo); else c.sel.splice(i, 1);
+        comboRender(n);
+    }
+    function comboRender(n) {
+        const c = combos[n], cont = document.getElementById('combo' + n);
+        if (!cont) return;
+        const e = escapeHtml;
+        cont.querySelector('.nx-combo-chips').innerHTML = c.sel.map(m =>
+            `<span class="nx-mail" title="${e(m)}"><span>${e(comboNombre(m))}</span><button type="button" aria-label="Quitar ${e(m)}" data-correo="${e(m)}">✕</button></span>`).join('');
+        cont.querySelectorAll('.nx-mail button').forEach(b => b.addEventListener('click', () => { c.sel = c.sel.filter(x => x !== b.dataset.correo); comboRender(n); }));
+        document.getElementById(c.campo).value = c.sel.join(', ');
+
+        const filtro = cont.querySelector('.nx-combo-input').value.trim().toLowerCase();
+        const opciones = comboOpciones(n).filter(a => !filtro || (a.nombre + ' ' + a.correo).toLowerCase().includes(filtro));
+        const tools = [];
+        if (c.filtra) tools.push(`<label><input type="checkbox" ${c.todas ? 'checked' : ''} data-todas="${n}"> Mostrar de todas las marcas</label>`);
+        tools.push(`<button type="button" data-masivo="${n}">${opciones.length && opciones.every(a => c.sel.includes(a.correo.toLowerCase())) ? 'Quitar todos' : 'Seleccionar todos'}</button>`);
+        cont.querySelector('.nx-combo-tools').innerHTML = catalogo.asesores.length ? tools.join('') : '';
+        const lista = cont.querySelector('.nx-combo-lista');
+        lista.innerHTML = opciones.length
+            ? opciones.map(a => { const on = c.sel.includes(a.correo.toLowerCase()); return `<button type="button" class="nx-combo-op ${on ? 'on' : ''}" role="option" aria-selected="${on}" data-correo="${e(a.correo.toLowerCase())}"><span class="ck">${on ? '<i class="fa-solid fa-check"></i>' : ''}</span><span class="tx"><b>${e(a.nombre || a.correo)}</b><small>${e(a.correo)}</small></span></button>`; }).join('')
+            : `<div class="nx-combo-vacio">${catalogo.asesores.length ? 'No hay coincidencias. Puedes escribir un correo y pulsar Enter.' : 'No hay lista de asesores cargada: escribe los correos y pulsa Enter.'}</div>`;
+        lista.querySelectorAll('.nx-combo-op').forEach(b => b.addEventListener('click', () => comboAlternar(n, b.dataset.correo)));
+        const chk = cont.querySelector('[data-todas]');
+        if (chk) chk.addEventListener('change', () => { c.todas = chk.checked; comboRender(n); });
+        const masivo = cont.querySelector('[data-masivo]');
+        if (masivo) masivo.addEventListener('click', () => {
+            const correos = opciones.map(a => a.correo.toLowerCase());
+            if (correos.every(x => c.sel.includes(x))) c.sel = c.sel.filter(x => !correos.includes(x));
+            else correos.forEach(x => { if (!c.sel.includes(x)) c.sel.push(x); });
+            comboRender(n);
+        });
+    }
+    // carga los correos guardados (o vacíos) y deja la lista lista para la marca elegida
+    function comboCargar(para, cc) {
+        const partir = t => String(t || '').split(/[,;\s]+/).map(x => x.trim().toLowerCase()).filter(Boolean);
+        combos.Para.sel = partir(para); combos.Cc.sel = partir(cc);
+        const marcaCamp = claveMarca(document.getElementById('inpMarca').value);
+        // si la marca no tiene asesores en el catálogo, se muestran todos
+        combos.Para.todas = !catalogo.asesores.some(a => claveMarca(a.marca) === marcaCamp);
+        comboRender('Para'); comboRender('Cc');
+    }
+    function marcaCambiada() {
+        const marcaCamp = claveMarca(document.getElementById('inpMarca').value);
+        combos.Para.todas = !catalogo.asesores.some(a => claveMarca(a.marca) === marcaCamp);
+        comboRender('Para');
+        armarFunnels();
+    }
+    document.addEventListener('click', e => { ['Para', 'Cc'].forEach(n => { const c = document.getElementById('combo' + n); if (c && !c.contains(e.target)) comboCerrar(n); }); });
 
     function toggleCorreo() {
         const on = document.getElementById('dealNotificar').checked;
