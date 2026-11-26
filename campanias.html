@@ -462,17 +462,17 @@
                                 </div>
                                 <div class="col-12 col-md-8">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Nombre de la campaña</label>
-                                    <input type="text" class="form-control glass-input" id="inpNombre" placeholder="Ej. Alumnos Secundaria - Noviembre">
+                                    <input type="text" class="form-control glass-input" id="inpNombre" oninput="sugerirCodigo()" placeholder="Ej. Alumnos Secundaria - Noviembre">
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Código (Recupe)</label>
-                                    <input type="text" class="form-control glass-input" id="inpCodigo" placeholder="recupesecundaria1-" oninput="actualizarHintCodigo(); estimar()">
+                                    <input type="text" class="form-control glass-input" id="inpCodigo" placeholder="se completa con el nombre" oninput="codigoManual = true; sugerirPrefijo(); actualizarHintCodigo(); estimar()">
                                     <div class="text-muted mt-1" style="font-size:0.7rem;" id="hintCodigo"></div>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Prefijo de ID</label>
-                                    <input type="text" class="form-control glass-input" id="inpPrefijo" placeholder="asecundaria">
-                                    <div class="text-muted mt-1" style="font-size:0.7rem;">Los IDs serán <b>prefijo1</b>, <b>prefijo2</b>...</div>
+                                    <input type="text" class="form-control glass-input" id="inpPrefijo" placeholder="se completa solo" oninput="prefijoManual = true; revisarPrefijo()">
+                                    <div class="text-muted mt-1" style="font-size:0.7rem;" id="hintPrefijo">Los IDs serán <b>prefijo1</b>, <b>prefijo2</b>...</div>
                                 </div>
                                 <div class="col-12 col-md-4">
                                     <label class="form-label text-muted" style="font-size:0.7rem;">Bot de Chatfuel</label>
@@ -781,6 +781,11 @@
     }
     function volverANexus() { location.href = NEXUS_URL; }
 
+    function sinAcceso(seccion) {
+        try { sessionStorage.setItem('nexus_aviso', 'No tienes acceso a ' + seccion + '.'); } catch (e) { /* sin almacenamiento */ }
+        location.href = NEXUS_URL;
+    }
+
     async function api(action, extra) {
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -788,6 +793,7 @@
             body: JSON.stringify(Object.assign({ action: action, usuario: currentUser.usuario, password: currentUser.password }, extra || {}))
         });
         const res = await response.json();
+        if (res.sinAcceso) { sinAcceso('Campañas'); throw new Error(res.message); }
         if (res.sesionInvalida) {
             sessionStorage.removeItem(SESSION_KEY);
             location.href = NEXUS_URL;
@@ -807,6 +813,8 @@
         if (!saved) { volverANexus(); return; }
         try { currentUser = JSON.parse(saved); } catch (e) { volverANexus(); return; }
         if (!currentUser || !currentUser.password) { volverANexus(); return; }
+        // solo ADMIN y SOPORTE entran aquí; los demás vuelven a Nexus con un aviso
+        if (!['ADMIN', 'SOPORTE'].includes(String(currentUser.rol || '').toUpperCase())) { sinAcceso('Campañas'); return; }
         const nombreUsuario = currentUser.nombre || currentUser.usuario || '?';
         document.getElementById('navUserNombre').innerText = nombreUsuario;
         document.getElementById('navUserRol').innerText = currentUser.rol;
@@ -956,6 +964,7 @@
             if (c.estado === 'Activa') btns += `<button class="btn-soft" onclick="adelantar()"><i class="fa-solid fa-forward"></i>Enviar el siguiente lote ya</button>`;
             if (k.errores > 0 || k.enviando > 0) btns += `<button class="btn-soft" onclick="reintentar()"><i class="fa-solid fa-rotate-right"></i>Reintentar errores</button>`;
             btns += `<button class="btn-soft" onclick="editarActual()"><i class="fa-solid fa-pen-to-square"></i>Editar / agregar contactos</button>`;
+            btns += `<button class="btn-soft" onclick="duplicarActual()" title="Crea otra campaña con la misma configuración"><i class="fa-solid fa-copy"></i>Duplicar</button>`;
         }
         document.getElementById('dAcciones').innerHTML = btns;
         document.getElementById('dAviso').innerHTML = c.estado === 'Borrador'
@@ -1231,9 +1240,15 @@
         document.getElementById('inpBot').innerHTML = '<option value="">Seleccione...</option>' + db.bots.map(b => `<option value="${escapeHtml(b.alias)}" ${b.alias === botSel ? 'selected' : ''}>${escapeHtml(b.nombre)}</option>`).join('');
     }
 
-    function abrirFormulario(codigo) {
+    function duplicarActual() {
+        bootstrap.Modal.getInstance(document.getElementById('detalleModal')).hide();
+        setTimeout(() => abrirFormulario(null, detalle.codigo), 400);
+    }
+
+    function abrirFormulario(codigo, duplicarDe) {
         if (!puedeEditar) return Swal.fire('Sin permisos', 'Tu rol solo puede ver las campañas.', 'warning');
         editando = codigo || null;
+        codigoManual = false; prefijoManual = false;
         resetCsv();
         document.getElementById('reglasContainer').innerHTML = '';
 
@@ -1304,11 +1319,13 @@
             document.getElementById('avisoContactosEdicion').innerHTML = '';
             agregarRegla({ estado: 'Respondió', accion: 'registrar' });
             agregarRegla({ estado: 'No_por_el_momento', accion: 'registrar' });
+            if (duplicarDe) copiarConfiguracion(duplicarDe);
         }
         armarFunnels();
         comboCargar(document.getElementById('dealPara').value, document.getElementById('dealCc').value);
         toggleCorreo();
         actualizarHintCodigo();
+        revisarPrefijo();
         estimar();
         tabIdx = 0;
         actualizarNavTabs();
@@ -1674,6 +1691,78 @@
     }
 
     function limpiarCodigo(texto) { return String(texto || '').trim().replace(/-+$/, ''); }
+    // ---------- código y prefijo automáticos ----------
+    let codigoManual = false, prefijoManual = false;
+
+    function quitarTildes(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+    // "dbamas1" -> base "dbamas"; el siguiente libre con esa base (dbamas2, dbamas3...)
+    function siguienteCodigo(base) {
+        const usados = db.campanas.map(c => String(c.codigo).toLowerCase()).filter(c => c.startsWith(base));
+        let mayor = 0;
+        usados.forEach(c => { const m = c.slice(base.length).match(/^(\d+)/); if (m) mayor = Math.max(mayor, parseInt(m[1], 10)); });
+        return base + (mayor + 1);
+    }
+    function baseDeNombre(nombre) {
+        const palabras = quitarTildes(nombre).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(p => p && !/^\d+$/.test(p));
+        return palabras.slice(0, 3).join('').slice(0, 14);
+    }
+    function prefijoDeCodigo(codigo) { const c = limpiarCodigo(codigo).replace(/[^A-Za-z0-9_]/g, ''); return c ? c + '_' : ''; }
+
+    // mientras no los escribas a mano, el código sale del nombre y el prefijo del código
+    function sugerirCodigo() {
+        if (editando) return;
+        if (!codigoManual) {
+            const base = baseDeNombre(document.getElementById('inpNombre').value);
+            document.getElementById('inpCodigo').value = base ? siguienteCodigo(base) : '';
+        }
+        sugerirPrefijo();
+        actualizarHintCodigo();
+    }
+    function sugerirPrefijo() {
+        if (editando || prefijoManual) { revisarPrefijo(); return; }
+        document.getElementById('inpPrefijo').value = prefijoDeCodigo(document.getElementById('inpCodigo').value);
+        revisarPrefijo();
+    }
+    // el prefijo identifica a la campaña cuando llega una respuesta: no puede repetirse
+    function revisarPrefijo() {
+        const p = document.getElementById('inpPrefijo').value.trim().toLowerCase();
+        const otra = p && !editando ? db.campanas.find(c => String(c.prefijoId).toLowerCase() === p) : null;
+        document.getElementById('hintPrefijo').innerHTML = otra
+            ? `<span class="text-danger fw-semibold">Ese prefijo ya lo usa la campaña ${escapeHtml(otra.codigo)}. Cámbialo.</span>`
+            : `Los IDs serán <b>${escapeHtml(p || 'prefijo')}1</b>, <b>${escapeHtml(p || 'prefijo')}2</b>...`;
+    }
+
+    // Duplicar: misma configuración, código nuevo y sin contactos
+    function copiarConfiguracion(origen) {
+        const c = db.campanas.find(x => x.codigo === origen);
+        if (!c) return;
+        const el = id => document.getElementById(id);
+        llenarSelects(c.marca, c.botAlias);
+        mostrarNumeroBot();
+        el('inpNombre').value = c.nombre;
+        const m = String(c.codigo).match(/^(.*?)(\d+)-?$/);
+        el('inpCodigo').value = siguienteCodigo(m ? m[1].toLowerCase() : String(c.codigo).toLowerCase());
+        el('inpAtributo').value = c.atributo || '';
+        el('inpLote').value = c.lote; el('inpIntervalo').value = c.intervaloMin; el('inpJitter').value = c.jitterMin;
+        el('inpDesde').value = c.horaDesde; el('inpHasta').value = c.horaHasta;
+        el('reglasContainer').innerHTML = '';
+        (c.reglas || []).forEach(r => agregarRegla(r));
+        el('extrasContainer').innerHTML = '';
+        (c.extras || []).forEach(x => agregarExtra(x));
+        const d = c.deal || {};
+        el('dealCategoria').value = d.categoryId || ''; el('dealEtapa').value = d.stageId || '';
+        etapaAuto = d.categoryId ? `C${d.categoryId}:NEW` : ''; funnelAnterior = d.categoryId || '';
+        el('dealMkt').value = d.codigoMkt || ''; el('dealOrigen').value = d.origenMkt || 'Chatfuel';
+        el('dealDetalles').value = d.detallesMkt || ''; el('dealInteres').value = d.interesMkt || '';
+        el('correoAsunto').value = d.correoAsunto || plantillaCorreo(c.marca).asunto;
+        el('correoHtml').value = d.correoHtml || plantillaCorreo(c.marca).html;
+        el('dealTitulo').value = d.tituloPrefijo || ''; el('dealTipo').value = d.tipoLead || '';
+        el('dealNotificar').checked = !!d.notificarCorreo;
+        el('dealPara').value = d.correoPara || ''; el('dealCc').value = d.correoCc || '';
+        sugerirPrefijo();
+        nxToast('info', 'Copié la configuración de ' + c.codigo + '. Cambia el nombre y sube los contactos nuevos.');
+    }
+
     function actualizarHintCodigo() {
         const cod = limpiarCodigo(document.getElementById('inpCodigo').value) || 'codigo';
         document.getElementById('hintCodigo').innerHTML = `Los lotes se llamarán <b>${escapeHtml(cod)}-1</b>, <b>${escapeHtml(cod)}-2</b>... (el guion final es opcional)`;
