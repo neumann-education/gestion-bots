@@ -232,6 +232,7 @@
     .envio-Pendiente { background: #eef2f7; color: #64748B; }
     .envio-Enviando { background: rgba(255,181,71,0.22); color: #B7791F; }
     .envio-Enviado { background: rgba(5,205,153,0.14); color: #059669; }
+    .envio-Prueba { background: rgba(67,24,255,0.10); color: #4318FF; }
     .envio-Error { background: rgba(229,62,62,0.12); color: #E53E3E; }
     @media (max-width: 767.98px) {
         .tabla-contactos thead { display: none; }
@@ -964,6 +965,7 @@
             if (c.estado === 'Activa') btns += `<button class="btn-soft" onclick="adelantar()"><i class="fa-solid fa-forward"></i>Enviar el siguiente lote ya</button>`;
             if (k.errores > 0 || k.enviando > 0) btns += `<button class="btn-soft" onclick="reintentar()"><i class="fa-solid fa-rotate-right"></i>Reintentar errores</button>`;
             btns += `<button class="btn-soft" onclick="editarActual()"><i class="fa-solid fa-pen-to-square"></i>Editar / agregar contactos</button>`;
+            btns += `<button class="btn-soft" onclick="probarEnvio()" title="Envía un mensaje de prueba a un número para comprobar la conexión con Chatfuel"><i class="fa-solid fa-flask"></i>Probar con un número</button>`;
             btns += `<button class="btn-soft" onclick="duplicarActual()" title="Crea otra campaña con la misma configuración"><i class="fa-solid fa-copy"></i>Duplicar</button>`;
         }
         document.getElementById('dAcciones').innerHTML = btns;
@@ -1238,6 +1240,57 @@
     function llenarSelects(marcaSel, botSel) {
         document.getElementById('inpMarca').innerHTML = '<option value="">Seleccione...</option>' + MARCAS.map(m => `<option value="${m}" ${m === marcaSel ? 'selected' : ''}>${m}</option>`).join('');
         document.getElementById('inpBot').innerHTML = '<option value="">Seleccione...</option>' + db.bots.map(b => `<option value="${escapeHtml(b.alias)}" ${b.alias === botSel ? 'selected' : ''}>${escapeHtml(b.nombre)}</option>`).join('');
+    }
+
+    // Prueba: manda un contacto a Chatfuel como lo haría el Enviador y muestra qué respondió
+    async function probarEnvio() {
+        const c = detalle;
+        const e = escapeHtml;
+        const extras = (c.extras || []).map((x, i) => `<div><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="pbEx${i}">${e(x.columna)}</label>
+            <input id="pbEx${i}" class="form-control glass-input pb-extra" data-col="${e(x.columna)}" autocomplete="off"></div>`).join('');
+        const r = await Swal.fire({
+            title: 'Probar con un número',
+            html: `<div class="text-start" style="display:grid;gap:12px;">
+                <div class="nx-aviso" style="margin:0;"><i class="fa-solid fa-triangle-exclamation mt-1"></i><div>Se envía un <b>WhatsApp real</b> con el bot <b>${e(c.botAlias)}</b> y el atributo <b>${e(c.atributo)}</b>. No cuenta en los totales ni sale en los lotes.</div></div>
+                <div><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="pbCel">Celular (con código de país)</label>
+                    <input id="pbCel" class="form-control glass-input" inputmode="numeric" autocomplete="off" placeholder="51987654321"></div>
+                <div class="row g-2"><div class="col-6"><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="pbNom">Nombres</label>
+                    <input id="pbNom" class="form-control glass-input" autocomplete="off" placeholder="Tu nombre"></div>
+                    <div class="col-6"><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="pbApe">Apellidos</label>
+                    <input id="pbApe" class="form-control glass-input" autocomplete="off"></div></div>
+                ${extras}
+                <div><label class="form-label text-muted mb-1" style="font-size:.72rem;" for="pbDeal">iddeal <span style="font-weight:400;">(opcional: para probar la actualización de un deal que ya existe)</span></label>
+                    <input id="pbDeal" class="form-control glass-input" inputmode="numeric" autocomplete="off"></div>
+            </div>`,
+            showCancelButton: true, confirmButtonText: 'Enviar prueba', cancelButtonText: 'Cancelar', focusConfirm: false,
+            didOpen: () => document.getElementById('pbCel').focus(),
+            preConfirm: async () => {
+                const v = id => document.getElementById(id).value.trim();
+                const celular = v('pbCel').replace(/\D/g, '');
+                if (celular.length < 10 || celular.length > 15) { Swal.showValidationMessage('Escribe el celular con el código de país, por ejemplo 51987654321.'); return false; }
+                const valores = {};
+                document.querySelectorAll('.pb-extra').forEach(i => { valores[i.dataset.col] = i.value.trim(); });
+                try {
+                    return await api('campProbarEnvio', { codigo: c.codigo, celular, nombre: v('pbNom'), apellido: v('pbApe'), iddeal: v('pbDeal'), extras: valores });
+                } catch (err) { Swal.showValidationMessage(err.message || 'No se pudo enviar'); return false; }
+            }
+        });
+        if (!r.isConfirmed || !r.value) return;
+        const res = r.value;
+        if (res.ok) {
+            await Swal.fire({
+                icon: 'success', title: 'Chatfuel recibió el contacto',
+                html: `<div class="text-start" style="font-size:.88rem;">Revisa tu WhatsApp: el mensaje debería llegar en unos segundos.<br><br>
+                    Para ver cómo se registra tu respuesta, aprieta un botón del mensaje y mira la fila marcada <b>Prueba</b> en <b>Contactos</b> (ID <code>${e(res.id)}</code>).</div>`
+            });
+        } else {
+            await Swal.fire({
+                icon: 'error', title: 'Chatfuel no aceptó el contacto',
+                html: `<div class="text-start" style="font-size:.88rem;">Respuesta (código ${e(res.httpCodigo)}):<br><code style="word-break:break-word;">${e(res.mensaje || 'sin detalle')}</code><br><br>
+                    Revisa en la pestaña <b>Bots</b> el Bot ID y el token de <b>${e(res.bot)}</b>.</div>`
+            });
+        }
+        recargarDetalle();
     }
 
     function duplicarActual() {
