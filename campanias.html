@@ -720,6 +720,11 @@
 
     <script>
     // ===== NX-UI: avisos con el diseño de Nexus (iguales en Campañas y Bots) =====
+    // Bootstrap devuelve el foco a su ventana abierta y no deja escribir en los avisos (SweetAlert) que se abren encima.
+    // Se apaga ese bloqueo de foco; las ventanas siguen cerrando con Esc y con el botón X.
+    if (window.bootstrap && bootstrap.Modal && bootstrap.Modal.prototype) {
+        bootstrap.Modal.prototype._initializeFocusTrap = function () { return { activate: function () {}, deactivate: function () {} }; };
+    }
     const NX_SWAL_CLASES = {
         container: 'nx-swal-container', popup: 'nx-swal', title: 'nx-swal-title', htmlContainer: 'nx-swal-text',
         actions: 'nx-swal-actions', confirmButton: 'nx-btn nx-btn-primary', cancelButton: 'nx-btn nx-btn-ghost', denyButton: 'nx-btn nx-btn-danger'
